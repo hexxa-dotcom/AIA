@@ -27,7 +27,7 @@ function EstudosTab() {
         </div>
         
         <div className="space-y-3">
-          <div className="bg-surface-2 p-3 rounded-2xl flex flex-col gap-2">
+          <div className="bg-surface-2 p-3 rounded-2xl flex flex-col gap-2 border" style={{ borderColor: "var(--flat-border)" }}>
             <div className="flex justify-between text-sm font-semibold">
               <span>Inglês Avançado</span>
               <span className="text-muted text-xs">65%</span>
@@ -36,7 +36,7 @@ function EstudosTab() {
               <div className="h-full bg-ink rounded-full w-[65%]" />
             </div>
           </div>
-          <div className="bg-surface-2 p-3 rounded-2xl flex flex-col gap-2">
+          <div className="bg-surface-2 p-3 rounded-2xl flex flex-col gap-2 border" style={{ borderColor: "var(--flat-border)" }}>
             <div className="flex justify-between text-sm font-semibold">
               <span>Programação Funcional</span>
               <span className="text-muted text-xs">20%</span>
@@ -82,12 +82,12 @@ function EstudosTab() {
         
         <div className="overflow-x-auto pb-2">
           <div className="flex gap-3 min-w-max">
-            <div className="w-[180px] bg-surface-2 p-3 rounded-2xl">
+            <div className="w-[180px] bg-surface-2 p-3 rounded-2xl border" style={{ borderColor: "var(--flat-border)" }}>
               <p className="text-[10px] text-danger font-bold uppercase tracking-wider mb-1">Amanhã</p>
               <p className="text-sm font-bold leading-tight mb-1">Entrega TCC 1</p>
               <p className="text-[11px] text-muted">Pós-graduação</p>
             </div>
-            <div className="w-[180px] bg-surface-2 p-3 rounded-2xl">
+            <div className="w-[180px] bg-surface-2 p-3 rounded-2xl border" style={{ borderColor: "var(--flat-border)" }}>
               <p className="text-[10px] text-warning font-bold uppercase tracking-wider mb-1">Dia 15</p>
               <p className="text-sm font-bold leading-tight mb-1">Prova de Speaking</p>
               <p className="text-[11px] text-muted">Inglês</p>

@@ -126,7 +126,7 @@ export function FocusView({ taskId }: { taskId: string }) {
         </div>
 
         {next && (
-          <div className="bg-ink text-white rounded-3xl p-6">
+          <div className="bg-ink text-white rounded-3xl p-6 border" style={{ borderColor: "var(--flat-border)" }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] uppercase tracking-wider font-semibold text-lime">
                 <Target size={11} className="inline mr-1" />

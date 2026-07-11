@@ -212,7 +212,7 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
       )}
 
       {/* ── Insights ── */}
-      <div className="bg-ink rounded-3xl p-4 shadow-sm text-surface">
+      <div className="bg-ink rounded-3xl p-4 shadow-sm text-surface border" style={{ borderColor: "var(--flat-border)" }}>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={16} className="text-lime" />
           <h3 className="font-bold text-sm">Insights do Mês</h3>
