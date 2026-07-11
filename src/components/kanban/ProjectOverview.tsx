@@ -79,7 +79,7 @@ export function ProjectOverview({ onShare, onStart }: Props) {
               value={okrs}
               onChange={(e) => setOkrs(e.target.value)}
               onBlur={handleSave}
-              placeholder="Ex:\nO1: Lançar versão 1.0\nKR1: Terminar design\nKR2: Homologar código..."
+              placeholder={"Ex:\nO1: Lançar versão 1.0\nKR1: Terminar design\nKR2: Homologar código..."}
               className="w-full min-h-[100px] bg-transparent resize-none text-sm outline-none placeholder:text-muted/50"
             />
           )}
@@ -100,7 +100,7 @@ export function ProjectOverview({ onShare, onStart }: Props) {
               value={kpis}
               onChange={(e) => setKpis(e.target.value)}
               onBlur={handleSave}
-              placeholder="Como vamos medir o sucesso?\nEx: 100 usuários ativos na primeira semana..."
+              placeholder={"Como vamos medir o sucesso?\nEx: 100 usuários ativos na primeira semana..."}
               className="w-full min-h-[100px] bg-transparent resize-none text-sm outline-none placeholder:text-muted/50"
             />
           )}
