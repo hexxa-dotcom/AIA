@@ -1,17 +1,12 @@
 "use client";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Flame, Star, CloudSun, Sun, Moon, MoreHorizontal, Focus, Eclipse, Briefcase, CircleUser, ArrowRightLeft } from "lucide-react";
+import { Flame, Star } from "lucide-react";
 import { useGameStore } from "@/store/useGameStore";
 import { levelProgress } from "@/lib/xp";
 import { ActiveTimerWidget } from "@/components/task/ActiveTimerWidget";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useWeather } from "@/hooks/useWeather";
-
 import { useProfileStore } from "@/store/useProfileStore";
-import { useCollapseStore } from "@/store/useCollapseStore";
-import { usePerfilStore } from "@/store/usePerfilStore";
-import { cn } from "@/lib/utils";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -20,71 +15,15 @@ function getGreeting(): string {
   return "Boa noite";
 }
 
-function TopbarMenu() {
-  const focusMode = useCollapseStore((s) => s.focusMode);
-  const setFocusMode = useCollapseStore((s) => s.setFocusMode);
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  const itemCls =
-    "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-ink hover:bg-ink/5 transition text-left";
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        title="Menu"
-        className="w-10 h-10 rounded-xl grid place-items-center transition bg-surface-2 border hover:bg-ink hover:text-surface text-muted"
-        style={{ borderColor: "var(--flat-border)" }}
-      >
-        <MoreHorizontal size={18} />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-12 z-50 w-56 p-1.5 rounded-xl flat-surface fade-in border shadow-lg" style={{ borderColor: "var(--flat-border)" }}>
-          <button
-            className={itemCls}
-            onClick={() => { setFocusMode(!focusMode); setOpen(false); }}
-          >
-            <Focus size={13} className="text-muted" />
-            <span className="flex-1">Modo foco</span>
-            <span className="text-[10px] text-muted">{focusMode ? "ativo" : "inativo"}</span>
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 function TopbarFull({ title, subtitle, right }: TopbarProps) {
   const user = useAuthStore((s) => s.user);
   const profile = useProfileStore((s) => s.profile);
   const userName = profile?.name || user?.email?.split("@")[0] || "Usuário";
   const greeting = useMemo(() => getGreeting(), []);
-  const now = new Date();
-  const dateLabel = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
   const xp = useGameStore((s) => s.xp);
   const streak = useGameStore((s) => s.streakDays);
   const todayXp = useGameStore((s) => s.todayXp);
   const { level, needed, pct } = levelProgress(xp);
-  const weather = useWeather();
 
   return (
     <header className="sticky top-2 sm:top-4 z-40 mb-4 sm:mb-6 glass border rounded-3xl px-6 py-4 flex flex-col xl:flex-row xl:items-center justify-between gap-6" style={{ borderColor: "var(--flat-border)", boxShadow: "0 4px 24px -12px rgba(0,0,0,0.1)" }}>

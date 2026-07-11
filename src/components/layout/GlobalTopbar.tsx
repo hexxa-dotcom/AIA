@@ -1,10 +1,9 @@
 "use client";
-import { Search, Sun, Moon, Sparkles, Focus, User } from "lucide-react";
-import { useAuthStore } from "@/store/useAuthStore";
-import { useProfileStore } from "@/store/useProfileStore";
+import { Search, Sun, Moon, Sparkles, Focus, Minimize2 } from "lucide-react";
 import { usePerfilStore } from "@/store/usePerfilStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { useCommandStore } from "@/store/useCommandStore";
+import { useCollapseStore } from "@/store/useCollapseStore";
 import { useSwitchPerfil } from "@/components/layout/PerfilSwitcher";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -45,7 +44,9 @@ export function GlobalTopbar() {
   
   const { theme, toggle: cycleTheme } = useThemeStore();
   const openCommand = useCommandStore((s) => s.setOpen);
-  
+  const focusMode = useCollapseStore((s) => s.focusMode);
+  const setFocusMode = useCollapseStore((s) => s.setFocusMode);
+
   const ThemeIcon = theme === "light" ? Sun : theme === "creme" ? Sparkles : theme === "dark" ? Moon : Focus;
 
   return (
@@ -73,7 +74,21 @@ export function GlobalTopbar() {
           <ThemeIcon size={14} />
         </button>
 
-        <PerfilSlider 
+        <button
+          onClick={() => setFocusMode(!focusMode)}
+          title={focusMode ? "Sair do modo foco" : "Modo foco (recolher tudo)"}
+          className={cn(
+            "w-9 h-9 rounded-full grid place-items-center transition border",
+            focusMode
+              ? "bg-ink text-surface"
+              : "bg-surface-2 text-muted hover:bg-ink hover:text-surface",
+          )}
+          style={{ borderColor: "var(--flat-border)" }}
+        >
+          <Minimize2 size={14} />
+        </button>
+
+        <PerfilSlider
           isProf={isProf} 
           onChange={(newIsProf) => switchPerfil(newIsProf ? "profissional" : "pessoal")} 
         />
