@@ -1,0 +1,53 @@
+{
+  "tasks": [
+    {
+      "id": "851b9fe8-5381-41f7-8bd3-1bce9c3dbf7d",
+      "title": "Configurar o AIA OS",
+      "description": "Personalizar colunas e criar primeiras tarefas reais",
+      "column": "today",
+      "priority": "medium",
+      "dueDate": 1783875817430,
+      "tags": [
+        "setup"
+      ]
+    },
+    {
+      "id": "c95b2766-1c1d-4dcd-a859-64a2286eeed3",
+      "title": "Planejar a semana",
+      "description": "Listar metas semanais e dividir em tarefas diárias",
+      "column": "backlog",
+      "priority": "high",
+      "tags": [
+        "planejamento"
+      ]
+    },
+    {
+      "id": "7d37e0bd-f927-4003-aa77-138400f1b3d7",
+      "title": "Revisar pipeline de clientes",
+      "description": "Olhar entradas do mês e priorizar follow-ups",
+      "column": "doing",
+      "priority": "urgent",
+      "dueDate": 1783811017430,
+      "tags": [
+        "trabalho"
+      ]
+    },
+    {
+      "id": "dbc2708e-6e1b-4280-83d1-e571ca3a21ef",
+      "title": "Anotações da reunião de segunda",
+      "description": "Síntese do que foi discutido",
+      "column": "done",
+      "priority": "low",
+      "completedAt": 1783789417430,
+      "tags": []
+    }
+  ],
+  "expenses": [],
+  "game": {
+    "level": 1,
+    "xp": 0,
+    "streakDays": 1,
+    "todayXp": 0
+  },
+  "syncedAt": "11/07/2026, 14:04:36"
+}
