@@ -67,6 +67,6 @@ export const useTimerStore = create<State & Actions>()(
         return a.accumulatedSec + extra;
       },
     }),
-    { name: "hexxa-timer-store" },
+    { name: "aia-timer-store" },
   ),
 );

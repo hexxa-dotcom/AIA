@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useMcpTools, callMcpTool } from "@/hooks/useMcpTools";
 import { NATIVE_TOOLS, executeNativeTool } from "@/lib/ai/nativeTools";
+import { searchMemories } from "@/lib/ai/memory";
 import { useTaskStore } from "@/store/useTaskStore";
 import { useAgendaStore } from "@/store/useAgendaStore";
 import {
@@ -72,7 +73,7 @@ function buildAppContext(): string {
   const game = useGameStore.getState();
 
   const lines: string[] = [
-    `=== DADOS DO HEXXA — ${now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })} ===`,
+    `=== DADOS DO AIA — ${now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })} ===`,
     "",
     `--- TAREFAS ---`,
     `Total: ${tasks.length} | Pendentes: ${pending.length} | Concluídas: ${done.length}`,
@@ -140,8 +141,8 @@ function stripToolCall(text: string) {
 }
 
 export function ChatPanel() {
-  const { provider, getActiveKey } = useAiStore();
-  const apiKey = getActiveKey();
+  const apiKey = useAiStore((s) => s.apiKey);
+  const model = useAiStore((s) => s.models.chat);
   const assistantName = useAiStore((s) => s.assistantName);
   const messages = useAiStore((s) => s.messages);
   const appendMessage = useAiStore((s) => s.appendMessage);
@@ -154,19 +155,23 @@ export function ChatPanel() {
 
   const { tools } = useMcpTools();
 
-  const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
+  const providerLabel = model.split("/").pop() || model;
 
   useEffect(() => {
     if (listRef.current)
       listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages.length, busy]);
 
-  function buildSystemPrompt() {
+  function buildSystemPrompt(memories: string[] = []) {
     const appCtx = buildAppContext();
 
-    let prompt = `Você é ${assistantName}, o copilot pessoal do usuário no AIA OS — um app de produtividade. Você tem acesso completo aos dados atuais do app (tarefas, finanças, agenda, gamificação). Use esses dados para responder perguntas concretas, dar alertas úteis e sugerir ações. Seja direto, prático e responda sempre em português brasileiro.
+    let prompt = `Você é ${assistantName}, o copilot pessoal do usuário no AIA OS — um app de produtividade. Você tem acesso completo aos dados atuais do app (tarefas, finanças, agenda, gamificação). Use esses dados para responder perguntas concretas, dar alertas úteis e sugerir ações. Seja direto, prático e responda sempre em português brasileiro.`;
 
-${appCtx}
+    if (memories.length > 0) {
+      prompt += `\n\n--- MEMÓRIAS RECUPERADAS (Fatos importantes sobre o usuário) ---\n${memories.map((m) => `• ${m}`).join("\n")}`;
+    }
+
+    prompt += `\n\n${appCtx}
 
 --- FERRAMENTAS DO SISTEMA (NATIVAS) ---
 Você tem a capacidade de alterar e criar dados no sistema utilizando as ferramentas nativas abaixo:
@@ -202,13 +207,21 @@ ${NATIVE_TOOLS.map((t) => `• ${t.name}: ${t.description} (Parâmetros: ${JSON.
 
       let loopHistory = [...history];
       let finalReply = "";
+      let memoriesText: string[] = [];
+
+      try {
+        const mems = await searchMemories(text, 5);
+        memoriesText = mems.map((m) => m.content);
+      } catch (e) {
+        console.error("Falha ao recuperar memórias:", e);
+      }
 
       for (let round = 0; round < 5; round++) {
         const reply = await chatComplete({
-          provider,
+          model,
           apiKey,
           messages: loopHistory,
-          system: buildSystemPrompt(),
+          system: buildSystemPrompt(memoriesText),
         });
 
         const toolCall = parseToolCall(reply);

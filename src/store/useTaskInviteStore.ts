@@ -43,7 +43,7 @@ export const useTaskInviteStore = create<State & Actions>()(
         set((s) => ({ sent: [...s.sent, full] }));
         // Push to target user's localStorage inbox
         try {
-          const key      = `hexxa-task-invites-${invite.toEmail}`;
+          const key      = `aia-task-invites-${invite.toEmail}`;
           const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as TaskInvite[];
           localStorage.setItem(key, JSON.stringify([...existing, full]));
         } catch { /* ignore */ }
@@ -63,7 +63,7 @@ export const useTaskInviteStore = create<State & Actions>()(
         }));
         // Signal back to sender (update localStorage on sender side)
         try {
-          const sentKey = `hexxa-task-invites-sent-${invite.fromEmail}`;
+          const sentKey = `aia-task-invites-sent-${invite.fromEmail}`;
           const raw     = JSON.parse(localStorage.getItem(sentKey) ?? "[]") as TaskInvite[];
           localStorage.setItem(sentKey, JSON.stringify(
             raw.map((i) => i.id === inviteId ? { ...i, status: "accepted" } : i),
@@ -82,7 +82,7 @@ export const useTaskInviteStore = create<State & Actions>()(
       setHydrated: (h) => set({ hydrated: h }),
     }),
     {
-      name: "hexxa-task-invites",
+      name: "aia-task-invites",
       onRehydrateStorage: () => (state) => state?.setHydrated(true),
     },
   ),

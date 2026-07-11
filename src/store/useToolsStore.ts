@@ -58,7 +58,7 @@ export const useToolsStore = create<State & Actions>()(
       setHydrated: (h) => set({ hydrated: h }),
     }),
     {
-      name: "hexxa-tools",
+      name: "aia-tools",
       onRehydrateStorage: () => (state) => {
         if (state) state.setHydrated(true);
       },

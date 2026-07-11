@@ -4,8 +4,9 @@ export interface ChatMessage {
 }
 
 export interface ChatRequest {
-  provider: string;
-  apiKey: string;
+  model: string;
+  // Opcional: quando vazia, o servidor usa OPENROUTER_API_KEY do .env.local.
+  apiKey?: string;
   messages: ChatMessage[];
   system?: string;
   maxTokens?: number;
@@ -22,18 +23,11 @@ export class AiError extends Error {
 }
 
 export async function chatComplete({
-  provider,
+  model,
   apiKey,
   messages,
   system,
 }: ChatRequest): Promise<string> {
-  if (!apiKey?.trim()) {
-    throw new AiError(
-      400,
-      "Chave de IA não configurada. Vá em AIA OS → Configurar.",
-    );
-  }
-
   const fullMessages: ChatMessage[] = system
     ? [{ role: "system", content: system }, ...messages]
     : messages;
@@ -44,7 +38,7 @@ export async function chatComplete({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      provider,
+      model,
       apiKey,
       messages: fullMessages,
     }),

@@ -11,7 +11,7 @@ export function ProjectInbox() {
   const receiveInvite = useTaskStore((s) => s.receiveInvite);
   const acceptInvite = useTaskStore((s) => s.acceptInvite);
   const rejectInvite = useTaskStore((s) => s.rejectInvite);
-  const meEmail = useAuthStore((s) => s.user?.email) || "usuario@hexxa.com";
+  const meEmail = useAuthStore((s) => s.user?.email) || "usuario@aia.com";
 
   const [isOpen, setIsOpen] = useState(false);
   const pendingCount = invites.filter((i) => i.status === "pending").length;
@@ -20,7 +20,7 @@ export function ProjectInbox() {
   useEffect(() => {
     const poll = setInterval(() => {
       if (!meEmail) return;
-      const key = `hexxa-board-invites-${meEmail}`;
+      const key = `aia-board-invites-${meEmail}`;
       try {
         const stored = JSON.parse(localStorage.getItem(key) ?? "[]") as BoardInvite[];
         stored.forEach((inv) => {

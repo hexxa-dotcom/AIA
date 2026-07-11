@@ -38,6 +38,6 @@ export const useViewStore = create<State & Actions>()(
           },
         })),
     }),
-    { name: "hexxa-view-store" },
+    { name: "aia-view-store" },
   ),
 );

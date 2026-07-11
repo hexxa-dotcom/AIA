@@ -14,7 +14,7 @@ async function sendViaResend(opts: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "AIA OS <noreply@hexxa.app>",
+      from: "AIA OS <noreply@aia.app>",
       to: [opts.to],
       subject: opts.subject,
       html: opts.html,

@@ -159,7 +159,7 @@ export function TaskInviteInbox({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!user?.email) return;
     try {
-      const key = `hexxa-task-invites-${user.email}`;
+      const key = `aia-task-invites-${user.email}`;
       const raw = JSON.parse(localStorage.getItem(key) ?? "[]") as TaskInvite[];
       raw.forEach((inv) => receive(inv));
     } catch {

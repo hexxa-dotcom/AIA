@@ -24,7 +24,7 @@ async function initServer(server: McpServer): Promise<McpTool[]> {
     await proxyCall(server.url, "initialize", {
       protocolVersion: "2024-11-05",
       capabilities: {},
-      clientInfo: { name: "hexxa", version: "1.0" },
+      clientInfo: { name: "aia", version: "1.0" },
     });
     const resp = await proxyCall(server.url, "tools/list");
     const tools: McpTool[] = (resp?.result?.tools ?? []).map((t: Record<string, unknown>) => ({

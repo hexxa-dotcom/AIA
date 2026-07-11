@@ -1,4 +1,4 @@
-# Hexxa Tasks
+# AIA
 
 Gerenciador de tarefas gamificado com Kanban, rotina diária, timer e calendário. Construído com Next.js 15 + Tailwind CSS v4 + Zustand.
 
@@ -16,7 +16,7 @@ Gerenciador de tarefas gamificado com Kanban, rotina diária, timer e calendári
 ## Como rodar
 
 ```bash
-cd hexxa-tasks
+cd aia-tasks
 npm install
 npm run dev
 ```
@@ -88,7 +88,7 @@ Tudo abaixo é opcional — o sistema já funciona 100% sem nenhum desses. Cada 
 ## Estrutura
 
 ```
-hexxa-tasks/
+aia-tasks/
 ├── src/
 │   ├── app/                # Páginas (Next App Router)
 │   │   ├── page.tsx        # Kanban

@@ -36,7 +36,7 @@ export function Board() {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const activeBoard = useTaskStore((s) => s.boards.find((b) => b.id === s.activeBoardId));
-  const meEmail = "filipe@hexxa.com"; // Mock, ideal seria ler do authStore/perfilStore
+  const meEmail = "filipe@aia.com"; // Mock, ideal seria ler do authStore/perfilStore
   const isViewer = Boolean(activeBoard?.sharedBy && activeBoard.collaborators?.find((c) => c.email === meEmail)?.role === "viewer");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));

@@ -72,7 +72,7 @@ export const useWorkoutStore = create<State & Actions>()(
         set((s) => ({ logs: s.logs.filter((l) => l.id !== logId) })),
     }),
     {
-      name: "hexxa-workout-store",
+      name: "aia-workout-store",
       onRehydrateStorage: () => (state) => state?.setHydrated(),
     }
   )

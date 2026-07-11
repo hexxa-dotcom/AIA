@@ -14,7 +14,7 @@ export function getSupabase(): SupabaseClient | null {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      storageKey: "hexxa-supabase-auth",
+      storageKey: "aia-supabase-auth",
     },
   });
   return cached;

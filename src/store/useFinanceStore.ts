@@ -136,7 +136,7 @@ export const useFinanceStore = create<State & Actions>()(
         };
         set((s) => ({ sentInvites: [...s.sentInvites, newInvite] }));
         try {
-          const key = `hexxa-invites-${invite.toEmail}`;
+          const key = `aia-invites-${invite.toEmail}`;
           const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as ExpenseInvite[];
           localStorage.setItem(key, JSON.stringify([...existing, newInvite]));
         } catch { /* ignore */ }
@@ -181,7 +181,7 @@ export const useFinanceStore = create<State & Actions>()(
       setHydrated: (h) => set({ hydrated: h }),
     }),
     {
-      name: "hexxa-finance",
+      name: "aia-finance",
       onRehydrateStorage: () => (state) => {
         if (state) state.setHydrated(true);
       },

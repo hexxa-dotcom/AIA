@@ -8,7 +8,7 @@ import { loadState } from "@/lib/mcp-state";
 
 function createServer() {
   const server = new Server(
-    { name: "hexxa", version: "1.0.0" },
+    { name: "aia", version: "1.0.0" },
     { capabilities: { tools: {} } },
   );
 

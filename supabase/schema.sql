@@ -1,4 +1,4 @@
--- HEXXA TASKS — Supabase schema
+-- AIA — Supabase schema
 -- Para ativar:
 -- 1. Crie projeto no Supabase
 -- 2. Vá em SQL Editor e rode este arquivo

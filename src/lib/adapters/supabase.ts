@@ -20,6 +20,10 @@ export interface SupabaseSnapshot {
   timeEntries: TimeEntry[];
   routines: RoutineBlock[];
   game: GameState | null;
+  expenses?: any[];
+  expenseInvites?: any[];
+  appointments?: any[];
+  studies?: any[];
 }
 
 function rowToTask(row: any, subtasks: any[]): Task {

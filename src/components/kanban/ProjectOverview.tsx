@@ -14,7 +14,7 @@ export function ProjectOverview({ onShare, onStart }: Props) {
   const activeBoardId = useTaskStore((s) => s.activeBoardId);
   const board = useTaskStore((s) => s.boards.find((b) => b.id === activeBoardId));
   const updateBoard = useTaskStore((s) => s.updateBoard);
-  const meEmail = useAuthStore((s) => s.user?.email) || "usuario@hexxa.com";
+  const meEmail = useAuthStore((s) => s.user?.email) || "usuario@aia.com";
 
   const [scope, setScope] = useState(board?.scope || "");
   const [okrs, setOkrs] = useState(board?.okrs || "");

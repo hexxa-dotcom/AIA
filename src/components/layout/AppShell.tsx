@@ -10,6 +10,7 @@ import { useRoutineStore } from "@/store/useRoutineStore";
 import { useGameStore } from "@/store/useGameStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { isAppwriteEnabled } from "@/lib/appwrite";
 import { useSupabaseSync } from "@/lib/sync";
 import { useReminderTicker } from "@/lib/reminders/ticker";
 import { makeSeedData } from "@/lib/seed";
@@ -59,21 +60,18 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
 
   useCommandShortcut();
 
-  // Inicializa auth do Supabase quando disponível
+  const isRemoteSyncEnabled = () => isSupabaseEnabled() || isAppwriteEnabled();
+
+  // Inicializa auth quando disponível
   useEffect(() => {
-    if (isSupabaseEnabled()) initAuth();
+    if (isRemoteSyncEnabled()) initAuth();
   }, [initAuth]);
 
-  // Auth guard: só redireciona depois que checou a sessão
-  useEffect(() => {
-    if (isSupabaseEnabled() && authChecked && !user) {
-      router.replace("/login");
-    }
-  }, [authChecked, user, router]);
+  // Auth guard desativado temporariamente
 
   // Quando offline (localStorage), faz seed local
   useEffect(() => {
-    if (isSupabaseEnabled()) return;
+    if (isRemoteSyncEnabled()) return;
     if (!taskHydrated || !routineHydrated) return;
     useTaskStore.getState().initIfEmpty();
     useGameStore.getState().resetTodayIfNewDay();
@@ -84,7 +82,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
     }
   }, [taskHydrated, routineHydrated]);
 
-  // Sync com Supabase quando logado
+  // Sync com banco remoto quando logado
   useSupabaseSync();
 
   // Lembretes (notificações)
@@ -101,13 +99,13 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
 
   // Garante registerActivity uma vez por sessão logada
   useEffect(() => {
-    if (isSupabaseEnabled() && user) {
+    if (isRemoteSyncEnabled() && user) {
       useGameStore.getState().resetTodayIfNewDay();
       useGameStore.getState().registerActivity();
     }
   }, [user]);
 
-  if (isSupabaseEnabled() && (!authChecked || !user)) {
+  if (isRemoteSyncEnabled() && (!authChecked || !user)) {
     return <ShellSkeleton />;
   }
 

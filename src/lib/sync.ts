@@ -1,25 +1,40 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { pullAll, pushAll } from "@/lib/adapters/supabase";
+import { pullAll, pushAll } from "@/lib/adapters";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { isAppwriteEnabled } from "@/lib/appwrite";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useTaskStore } from "@/store/useTaskStore";
 import { useRoutineStore } from "@/store/useRoutineStore";
 import { useGameStore } from "@/store/useGameStore";
+import { useFinanceStore } from "@/store/useFinanceStore";
+import { useAgendaStore } from "@/store/useAgendaStore";
+import { useStudiesStore } from "@/store/useStudiesStore";
 import { makeSeedData } from "@/lib/seed";
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 let lastPushedSig = "";
 
+function isRemoteSyncEnabled(): boolean {
+  return isSupabaseEnabled() || isAppwriteEnabled();
+}
+
 function snapshotSig(): string {
   const t = useTaskStore.getState();
   const r = useRoutineStore.getState();
   const g = useGameStore.getState();
+  const f = useFinanceStore.getState();
+  const a = useAgendaStore.getState();
+  const s = useStudiesStore.getState();
   return JSON.stringify([
     t.boards.length,
     t.tasks.map((x) => [x.id, x.updatedAt, x.column, x.order, x.subtasks.length]),
     r.blocks.map((x) => [x.id, x.title, x.startMinute]),
     [g.xp, g.level, g.streakDays, g.achievements.length],
+    f.expenses.length,
+    f.invites.length,
+    a.appointments.length,
+    s.items.length,
   ]);
 }
 
@@ -27,6 +42,9 @@ async function pushNow(userId: string) {
   const t = useTaskStore.getState();
   const r = useRoutineStore.getState();
   const g = useGameStore.getState();
+  const f = useFinanceStore.getState();
+  const a = useAgendaStore.getState();
+  const s = useStudiesStore.getState();
   await pushAll(userId, {
     boards: t.boards,
     tasks: t.tasks,
@@ -42,6 +60,10 @@ async function pushNow(userId: string) {
       achievements: g.achievements,
       history: g.history,
     },
+    expenses: f.expenses,
+    expenseInvites: f.invites,
+    appointments: a.appointments,
+    studies: s.items,
   });
 }
 
@@ -53,9 +75,9 @@ function schedulePush(userId: string) {
     try {
       await pushNow(userId);
       lastPushedSig = sig;
-      console.log("[supabase sync] push ok");
+      console.log("[db sync] push ok");
     } catch (e: any) {
-      console.error("[supabase sync] push falhou:", {
+      console.error("[db sync] push falhou:", {
         message: e?.message,
         code: e?.code,
         details: e?.details,
@@ -71,7 +93,7 @@ export function useSupabaseSync() {
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (!isSupabaseEnabled() || !user) return;
+    if (!isRemoteSyncEnabled() || !user) return;
 
     let cancelled = false;
     (async () => {
@@ -111,25 +133,37 @@ export function useSupabaseSync() {
               history: data.game.history,
             });
           }
+          if (data.expenses) {
+            useFinanceStore.setState({ expenses: data.expenses, invites: data.expenseInvites || [] });
+          }
+          if (data.appointments) {
+            useAgendaStore.setState({ appointments: data.appointments });
+          }
+          if (data.studies) {
+            useStudiesStore.setState({ items: data.studies });
+          }
         }
 
         initialized.current = true;
 
         if (seedIfEmpty) {
-          // Seed acabou de subir local; força push pra subir pro Supabase
+          // Seed acabou de subir local; força push pra subir pro banco remoto
           lastPushedSig = "__force__";
           schedulePush(user.id);
-          console.log("[supabase sync] seed criado, agendando push inicial");
+          console.log("[db sync] seed criado, agendando push inicial");
         } else {
           lastPushedSig = snapshotSig();
-          console.log("[supabase sync] pull ok:", {
+          console.log("[db sync] pull ok:", {
             boards: data.boards.length,
             tasks: data.tasks.length,
             routines: data.routines.length,
+            expenses: data.expenses?.length || 0,
+            appointments: data.appointments?.length || 0,
+            studies: data.studies?.length || 0,
           });
         }
       } catch (e) {
-        console.error("[supabase sync] pull falhou:", e);
+        console.error("[db sync] pull falhou:", e);
       }
     })();
 
@@ -139,7 +173,7 @@ export function useSupabaseSync() {
   }, [user]);
 
   useEffect(() => {
-    if (!isSupabaseEnabled() || !user) return;
+    if (!isRemoteSyncEnabled() || !user) return;
 
     const unsubT = useTaskStore.subscribe(() => {
       if (initialized.current) schedulePush(user.id);
@@ -150,11 +184,24 @@ export function useSupabaseSync() {
     const unsubG = useGameStore.subscribe(() => {
       if (initialized.current) schedulePush(user.id);
     });
+    const unsubF = useFinanceStore.subscribe(() => {
+      if (initialized.current) schedulePush(user.id);
+    });
+    const unsubA = useAgendaStore.subscribe(() => {
+      if (initialized.current) schedulePush(user.id);
+    });
+    const unsubS = useStudiesStore.subscribe(() => {
+      if (initialized.current) schedulePush(user.id);
+    });
 
     return () => {
       unsubT();
       unsubR();
       unsubG();
+      unsubF();
+      unsubA();
+      unsubS();
     };
   }, [user]);
 }
+

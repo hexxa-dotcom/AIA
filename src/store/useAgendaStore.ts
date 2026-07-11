@@ -30,6 +30,6 @@ export const useAgendaStore = create<State>()(
         set((s) => ({ appointments: s.appointments.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
       remove: (id) => set((s) => ({ appointments: s.appointments.filter((a) => a.id !== id) })),
     }),
-    { name: "hexxa-agenda" },
+    { name: "aia-agenda" },
   ),
 );

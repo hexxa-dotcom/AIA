@@ -62,7 +62,7 @@ export function ExpenseInbox({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!user?.email) return;
     try {
-      const key = `hexxa-invites-${user.email}`;
+      const key = `aia-invites-${user.email}`;
       const raw = JSON.parse(
         localStorage.getItem(key) ?? "[]",
       ) as ExpenseInvite[];

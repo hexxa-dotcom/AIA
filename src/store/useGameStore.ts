@@ -88,6 +88,6 @@ export const useGameStore = create<GameState & Actions>()(
         if (get().todayDate !== today) set({ todayDate: today, todayXp: 0 });
       },
     }),
-    { name: "hexxa-game-store" },
+    { name: "aia-game-store" },
   ),
 );

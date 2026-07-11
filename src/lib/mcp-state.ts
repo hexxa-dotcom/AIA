@@ -1,7 +1,7 @@
 import { writeFileSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 
-const STATE_FILE = join(process.cwd(), ".hexxa-mcp-state.json");
+const STATE_FILE = join(process.cwd(), ".aia-mcp-state.json");
 
 export interface McpState {
   tasks: {

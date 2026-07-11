@@ -9,10 +9,10 @@ export function useCollapse(key: string, defaultCollapsed = false) {
 
   // migra o estado antigo salvo por widget e registra a chave no store
   useEffect(() => {
-    const legacy = localStorage.getItem(`hexxa-col-${key}`);
+    const legacy = localStorage.getItem(`aia-col-${key}`);
     if (legacy !== null) {
       register(key, legacy === "1");
-      localStorage.removeItem(`hexxa-col-${key}`);
+      localStorage.removeItem(`aia-col-${key}`);
     } else {
       register(key, defaultCollapsed);
     }

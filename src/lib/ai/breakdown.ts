@@ -15,8 +15,8 @@ Responda APENAS com um JSON válido no formato:
 Sem markdown, sem explicações, só o JSON.`;
 
 export async function suggestSubtasks(opts: {
-  apiKey: string;
-  provider: string;
+  apiKey?: string;
+  model: string;
   task: Pick<Task, "title" | "description" | "subtasks">;
   extraContext?: string;
 }): Promise<string[]> {
@@ -33,7 +33,7 @@ ${opts.task.description ? `Descrição: ${opts.task.description}` : ""}${existin
 
   const raw = await chatComplete({
     apiKey: opts.apiKey,
-    provider: opts.provider,
+    model: opts.model,
     messages,
     system: SYSTEM_PROMPT,
     maxTokens: 800,

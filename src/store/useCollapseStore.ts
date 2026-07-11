@@ -39,6 +39,6 @@ export const useCollapseStore = create<State & Actions>()(
           map: Object.fromEntries(Object.keys(s.map).map((k) => [k, on])),
         })),
     }),
-    { name: "hexxa-collapse" },
+    { name: "aia-collapse" },
   ),
 );

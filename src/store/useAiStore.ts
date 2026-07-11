@@ -2,8 +2,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { genId as nanoid } from "@/lib/id";
+import { DEFAULT_MODELS } from "@/lib/ai/models";
 
-export type AiProvider = "openai" | "anthropic" | "gemini" | "deepseek";
+export type ModelRole = "system" | "chat";
 
 export interface AiMessage {
   id: string;
@@ -15,13 +16,11 @@ export interface AiMessage {
 }
 
 interface State {
-  provider: AiProvider;
-  keys: {
-    openai: string;
-    anthropic: string;
-    gemini: string;
-    deepseek: string;
-  };
+  // Chave única do OpenRouter (BYOK). Opcional: o servidor usa
+  // OPENROUTER_API_KEY do .env.local como fallback quando vazia.
+  apiKey: string;
+  // Um modelo por papel — mesma chave, modelos diferentes por requisição.
+  models: { system: string; chat: string };
   messages: AiMessage[];
   assistantName: string;
   hydrated: boolean;
@@ -29,9 +28,8 @@ interface State {
 
 interface Actions {
   setHydrated: () => void;
-  setProvider: (provider: AiProvider) => void;
-  setKey: (provider: AiProvider, key: string) => void;
-  getActiveKey: () => string;
+  setApiKey: (key: string) => void;
+  setModel: (role: ModelRole, id: string) => void;
   setAssistantName: (name: string) => void;
   appendMessage: (m: Omit<AiMessage, "id" | "at">) => string;
   updateMessage: (id: string, patch: Partial<AiMessage>) => void;
@@ -40,28 +38,17 @@ interface Actions {
 
 export const useAiStore = create<State & Actions>()(
   persist(
-    (set, get) => ({
-      provider: "openai",
-      keys: {
-        openai: "",
-        anthropic: "",
-        gemini: "",
-        deepseek: "",
-      },
+    (set) => ({
+      apiKey: "",
+      models: { system: DEFAULT_MODELS.system, chat: DEFAULT_MODELS.chat },
       messages: [],
       assistantName: "Aia",
       hydrated: false,
 
       setHydrated: () => set({ hydrated: true }),
-      setProvider: (provider) => set({ provider }),
-      setKey: (provider, key) =>
-        set((state) => ({
-          keys: {
-            ...state.keys,
-            [provider]: key,
-          },
-        })),
-      getActiveKey: () => get().keys[get().provider],
+      setApiKey: (apiKey) => set({ apiKey }),
+      setModel: (role, id) =>
+        set((state) => ({ models: { ...state.models, [role]: id } })),
       setAssistantName: (assistantName) => set({ assistantName }),
 
       appendMessage: (m) => {
@@ -78,7 +65,7 @@ export const useAiStore = create<State & Actions>()(
       clearMessages: () => set({ messages: [] }),
     }),
     {
-      name: "hexxa-ai-store",
+      name: "aia-ai-store",
       onRehydrateStorage: () => (state) => state?.setHydrated(),
     },
   ),

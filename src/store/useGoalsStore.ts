@@ -98,6 +98,6 @@ export const useGoalsStore = create<State>()(
           }),
         })),
     }),
-    { name: "hexxa-goals" },
+    { name: "aia-goals" },
   ),
 );

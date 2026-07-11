@@ -6,7 +6,7 @@
 
 const PBKDF2_ITERATIONS = 200_000;
 const KEY_LENGTH_BITS = 256;
-const VERIFIER_PLAINTEXT = "hexxa-vault-verifier-v1";
+const VERIFIER_PLAINTEXT = "aia-vault-verifier-v1";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();

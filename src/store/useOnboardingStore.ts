@@ -16,6 +16,6 @@ export const useOnboardingStore = create<OnboardingStore>()(
       complete: () => set({ completed: true }),
       setStep: (n) => set({ step: n }),
     }),
-    { name: "hexxa-onboarding" }
+    { name: "aia-onboarding" }
   )
 );

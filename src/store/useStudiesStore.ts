@@ -49,7 +49,7 @@ export const useStudiesStore = create<State & Actions>()(
         })),
     }),
     {
-      name: "hexxa-studies-store",
+      name: "aia-studies-store",
       onRehydrateStorage: () => (state) => state?.setHydrated(),
     }
   )

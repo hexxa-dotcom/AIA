@@ -1,5 +1,7 @@
 "use client";
 import { getSupabase } from "@/lib/supabase";
+import { getAppwrite, isAppwriteEnabled } from "@/lib/appwrite";
+import { ID, Query } from "appwrite";
 
 export interface CommentItem {
   id: string;
@@ -12,16 +14,27 @@ export interface CommentItem {
 
 function rowToComment(r: any): CommentItem {
   return {
-    id: r.id,
-    taskId: r.task_id,
-    userId: r.user_id,
+    id: r.$id || r.id,
+    taskId: r.taskId || r.task_id,
+    userId: r.userId || r.user_id,
     body: r.body,
     mentions: r.mentions ?? [],
-    createdAt: new Date(r.created_at).getTime(),
+    createdAt: r.createdAt ? r.createdAt : new Date(r.created_at).getTime(),
   };
 }
 
 export async function listComments(taskId: string): Promise<CommentItem[]> {
+  if (isAppwriteEnabled()) {
+    const { databases } = getAppwrite();
+    if (!databases) return [];
+    const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "aia";
+    const res = await databases.listDocuments(databaseId, "task_comments", [
+      Query.equal("taskId", taskId),
+      Query.orderAsc("createdAt"),
+    ]);
+    return res.documents.map(rowToComment);
+  }
+
   const supabase = getSupabase();
   if (!supabase) return [];
   const { data, error } = await supabase
@@ -39,6 +52,32 @@ export async function addComment(
   body: string,
   mentions: string[] = [],
 ): Promise<CommentItem> {
+  if (isAppwriteEnabled()) {
+    const { databases } = getAppwrite();
+    if (!databases) throw new Error("Appwrite não inicializado");
+    const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "aia";
+    const docId = ID.unique();
+    const permissions = [
+      `read("users")`,
+      `update("user:${userId}")`,
+      `delete("user:${userId}")`,
+    ];
+    const data = await databases.createDocument(
+      databaseId,
+      "task_comments",
+      docId,
+      {
+        taskId,
+        userId,
+        body,
+        mentions,
+        createdAt: Date.now(),
+      },
+      permissions,
+    );
+    return rowToComment(data);
+  }
+
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase não inicializado");
   const { data, error } = await supabase
@@ -51,7 +90,18 @@ export async function addComment(
 }
 
 export async function deleteComment(id: string): Promise<void> {
+  if (isAppwriteEnabled()) {
+    const { databases } = getAppwrite();
+    if (!databases) return;
+    const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "aia";
+    try {
+      await databases.deleteDocument(databaseId, "task_comments", id);
+    } catch (e) {}
+    return;
+  }
+
   const supabase = getSupabase();
   if (!supabase) return;
   await supabase.from("task_comments").delete().eq("id", id);
 }
+

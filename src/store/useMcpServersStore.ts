@@ -34,6 +34,6 @@ export const useMcpServersStore = create<State>()(
           servers: st.servers.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)),
         })),
     }),
-    { name: "hexxa-mcp-servers" },
+    { name: "aia-mcp-servers" },
   ),
 );

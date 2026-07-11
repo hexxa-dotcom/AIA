@@ -53,6 +53,6 @@ export const useCanvasStore = create<CanvasState>()(
 
       clearAll: () => set({ nodes: [], strokes: [] }),
     }),
-    { name: "hexxa-canvas" },
+    { name: "aia-canvas" },
   ),
 );

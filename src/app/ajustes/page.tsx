@@ -12,7 +12,8 @@ import {
   Shield, KeyRound, Eye, EyeOff, Palette, Sun, Moon, Focus, Sparkles, Bot,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAiStore, type AiProvider } from "@/store/useAiStore";
+import { useAiStore } from "@/store/useAiStore";
+import { OPENROUTER_MODELS } from "@/lib/ai/models";
 import { useThemeStore } from "@/store/useThemeStore";
 import { useSoundStore } from "@/store/useSoundStore";
 import { sounds } from "@/lib/sounds";
@@ -24,6 +25,8 @@ import { useMcpTools } from "@/hooks/useMcpTools";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useProfileStore, type PerfilData } from "@/store/useProfileStore";
 import { useVaultStore } from "@/store/useVaultStore";
+import { isSupabaseEnabled } from "@/lib/supabase";
+import { isAppwriteEnabled } from "@/lib/appwrite";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -350,12 +353,12 @@ function AppearancePanel() {
 
 function ResendKeyField() {
   const [key, setKey] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("hexxa-resend-key") ?? "" : "",
+    typeof window !== "undefined" ? localStorage.getItem("aia-resend-key") ?? "" : "",
   );
   const [saved, setSaved] = useState(false);
 
   function saveKey() {
-    localStorage.setItem("hexxa-resend-key", key);
+    localStorage.setItem("aia-resend-key", key);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -388,8 +391,38 @@ function ResendKeyField() {
 }
 
 function IntegrationsPanel() {
+  const supabaseActive = isSupabaseEnabled();
+  const appwriteActive = isAppwriteEnabled();
+
   return (
     <div className="space-y-3">
+      {/* Appwrite */}
+      <div className="bg-white rounded-3xl p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-xl bg-surface-2 grid place-items-center shrink-0">
+            <Cloud size={16} className="text-muted" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-sm">Appwrite</p>
+              {appwriteActive ? (
+                <StatusBadge label="ativo" color="success" />
+              ) : (
+                <StatusBadge label="desativado" color="muted" />
+              )}
+            </div>
+            <p className="text-xs text-muted">Salve dados na nuvem e sincronize via NoSQL</p>
+          </div>
+        </div>
+        <ol className="text-xs text-muted space-y-1.5 ml-4 list-decimal leading-relaxed">
+          <li>Crie um projeto em <strong className="text-ink">cloud.appwrite.io</strong></li>
+          <li>Gere uma API Key com escopos de escrita em databases, coleções e atributos</li>
+          <li>Configure as chaves em seu <code className="bg-surface-2 px-1 rounded">.env.local</code> e defina <code className="bg-surface-2 px-1 rounded">NEXT_PUBLIC_PERSISTENCE=appwrite</code></li>
+          <li>Rode o script de setup automático: <code className="bg-surface-2 px-1 rounded">node scripts/setup-appwrite.js</code></li>
+          <li>Reinicie o servidor de desenvolvimento</li>
+        </ol>
+      </div>
+
       {/* Supabase */}
       <div className="bg-white rounded-3xl p-5">
         <div className="flex items-center gap-3 mb-3">
@@ -399,9 +432,13 @@ function IntegrationsPanel() {
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <p className="font-semibold text-sm">Supabase</p>
-              <StatusBadge label="pendente" color="warning" />
+              {supabaseActive ? (
+                <StatusBadge label="ativo" color="success" />
+              ) : (
+                <StatusBadge label="desativado" color="muted" />
+              )}
             </div>
-            <p className="text-xs text-muted">Salve dados na nuvem e sincronize entre dispositivos</p>
+            <p className="text-xs text-muted">Salve dados na nuvem e sincronize via PostgreSQL</p>
           </div>
         </div>
         <ol className="text-xs text-muted space-y-1.5 ml-4 list-decimal leading-relaxed">
@@ -488,8 +525,8 @@ function IntegrationsPanel() {
 
 function McpPanel() {
   const mcpUrl = typeof window !== "undefined" ? `${window.location.origin}/api/mcp` : "http://localhost:3000/api/mcp";
-  const claudeConfig = JSON.stringify({ mcpServers: { hexxa: { url: mcpUrl } } }, null, 2);
-  const cursorConfig = JSON.stringify({ hexxa: { url: mcpUrl } }, null, 2);
+  const claudeConfig = JSON.stringify({ mcpServers: { aia: { url: mcpUrl } } }, null, 2);
+  const cursorConfig = JSON.stringify({ aia: { url: mcpUrl } }, null, 2);
   const { servers, add, remove, toggle, update } = useMcpServersStore();
   const { tools, loading, refresh } = useMcpTools();
   const [newName, setNewName] = useState("");
@@ -652,10 +689,10 @@ function DataPanel() {
   const [confirming, setConfirming] = useState(false);
 
   function resetAll() {
-    localStorage.removeItem("hexxa-tasks-store");
-    localStorage.removeItem("hexxa-game-store");
-    localStorage.removeItem("hexxa-timer-store");
-    localStorage.removeItem("hexxa-routine-store");
+    localStorage.removeItem("aia-tasks-store");
+    localStorage.removeItem("aia-game-store");
+    localStorage.removeItem("aia-timer-store");
+    localStorage.removeItem("aia-routine-store");
     window.location.reload();
   }
 
@@ -670,7 +707,7 @@ function DataPanel() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `hexxa-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `aia-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -839,15 +876,40 @@ function VaultPanel() {
 
 // ── Aia panel ─────────────────────────────────────────────────────────────────
 
-function AiaPanel() {
-  const { provider, setProvider, keys, setKey } = useAiStore();
-  const [saved, setSaved] = useState(false);
-  const [visibleKey, setVisibleKey] = useState<string | null>(null);
+function ModelField({ label, hint, value, onChange }: {
+  label: string;
+  hint: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="text-[10px] uppercase tracking-widest font-semibold text-muted block mb-1">
+        {label}
+      </label>
+      <input
+        list="openrouter-models"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="vendor/modelo"
+        className="w-full px-3 py-2 rounded-xl bg-surface-2 text-xs font-mono outline-none focus:ring-2 focus:ring-ink/15"
+      />
+      <p className="text-[10px] text-muted mt-1">{hint}</p>
+    </div>
+  );
+}
 
-  function handleSave(prov: AiProvider, val: string) {
-    setKey(prov, val);
+function AiaPanel() {
+  const apiKey = useAiStore((s) => s.apiKey);
+  const setApiKey = useAiStore((s) => s.setApiKey);
+  const models = useAiStore((s) => s.models);
+  const setModel = useAiStore((s) => s.setModel);
+  const [showKey, setShowKey] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  function markSaved() {
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setTimeout(() => setSaved(false), 1500);
   }
 
   return (
@@ -859,67 +921,70 @@ function AiaPanel() {
           </div>
           <div>
             <p className="font-semibold text-sm">Inteligência Artificial (Aia)</p>
-            <p className="text-xs text-muted mt-0.5">Gerencie os motores da assistente do sistema</p>
+            <p className="text-xs text-muted mt-0.5">
+              Um gateway (OpenRouter): uma chave, qualquer modelo.
+            </p>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted mb-2">Provedor Principal</p>
-            <div className="flex flex-wrap gap-2">
-              {(["openai", "anthropic", "gemini", "deepseek"] as AiProvider[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setProvider(p)}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold capitalize transition ${
-                    provider === p ? "bg-ink text-surface shadow-sm" : "bg-surface-2 text-muted hover:bg-ink/10"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted mt-2">
-              A Aia usará preferencialmente este provedor para executar ações. Certifique-se de configurar a chave correspondente abaixo.
-            </p>
+        <div>
+          <label className="text-[10px] uppercase tracking-widest font-semibold text-muted block mb-1">
+            Chave OpenRouter (BYOK)
+          </label>
+          <div className="flex gap-2">
+            <input
+              type={showKey ? "text" : "password"}
+              placeholder="sk-or-v1-..."
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              onBlur={markSaved}
+              className="flex-1 px-3 py-2 rounded-xl bg-surface-2 text-xs font-mono outline-none focus:ring-2 focus:ring-ink/15"
+            />
+            <button
+              onClick={() => setShowKey((v) => !v)}
+              className="px-3 rounded-xl bg-surface-2 text-muted hover:text-ink transition"
+            >
+              {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
           </div>
+          <p className="text-[10px] text-muted mt-2">
+            Guardada só no seu navegador. Deixe em branco para usar a chave do
+            servidor (OPENROUTER_API_KEY no .env.local).{" "}
+            {saved && <span className="text-success font-semibold">Salvo ✓</span>}
+          </p>
+          <a
+            href="https://openrouter.ai/keys"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[10px] text-ink underline underline-offset-2 mt-1 inline-block"
+          >
+            Pegar uma chave →
+          </a>
         </div>
       </div>
 
       <div className="bg-white rounded-3xl p-5 space-y-4">
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted mb-2">Chaves de API Locais (BYOK)</p>
-        <p className="text-xs text-muted mb-4">
-          Sua chave é armazenada de forma segura apenas no seu navegador e não é enviada para nossos servidores.
-        </p>
+        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted">Modelos</p>
+        <datalist id="openrouter-models">
+          {OPENROUTER_MODELS.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.label}{m.note ? ` — ${m.note}` : ""}
+            </option>
+          ))}
+        </datalist>
 
-        {(["openai", "anthropic", "gemini", "deepseek"] as AiProvider[]).map((p) => (
-          <div key={p}>
-            <label className="text-[10px] uppercase tracking-widest font-semibold text-muted block mb-1 capitalize">
-              Chave API {p}
-            </label>
-            <div className="flex gap-2">
-              <input
-                type={visibleKey === p ? "text" : "password"}
-                placeholder={`sk-...`}
-                value={keys[p]}
-                onChange={(e) => setKey(p, e.target.value)}
-                className="flex-1 px-3 py-2 rounded-xl bg-surface-2 text-xs font-mono outline-none focus:ring-2 focus:ring-ink/15"
-              />
-              <button
-                onClick={() => setVisibleKey(visibleKey === p ? null : p)}
-                className="px-3 rounded-xl bg-surface-2 text-muted hover:text-ink transition"
-              >
-                {visibleKey === p ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
-              <button
-                onClick={() => handleSave(p, keys[p])}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-ink text-lime hover:opacity-90 transition flex items-center gap-1.5"
-              >
-                {saved ? "Salvo" : "Salvar"}
-              </button>
-            </div>
-          </div>
-        ))}
+        <ModelField
+          label="Modelo do Sistema"
+          hint="Gerencia tarefas, ações e insights. Prefira um barato/rápido."
+          value={models.system}
+          onChange={(v) => setModel("system", v)}
+        />
+        <ModelField
+          label="Modelo do Chat"
+          hint="Conversa no copilot. Vale um modelo melhor."
+          value={models.chat}
+          onChange={(v) => setModel("chat", v)}
+        />
       </div>
     </div>
   );

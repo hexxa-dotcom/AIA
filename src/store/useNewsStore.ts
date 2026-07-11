@@ -17,7 +17,7 @@ export const useNewsStore = create<NewsState>()(
       setSubtopic: (subtopic) => set({ subtopic }),
     }),
     {
-      name: "hexxa-news-store",
+      name: "aia-news-store",
     },
   ),
 );

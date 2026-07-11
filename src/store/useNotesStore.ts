@@ -67,7 +67,7 @@ export const useNotesStore = create<State & Actions>()(
       pinned: () => get().notes.filter((n) => n.pinned),
     }),
     { 
-      name: "hexxa-quick-notes",
+      name: "aia-quick-notes",
       version: 2,
       migrate: (persistedState: any, version: number) => {
         if (version === 0 || version === 1) {

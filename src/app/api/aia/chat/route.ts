@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       model = deepseek("deepseek-chat");
     } else if (provider === "gemini" && keys.gemini) {
       const google = createGoogleGenerativeAI({ apiKey: keys.gemini });
-      model = google("gemini-1.5-flash");
+      model = google("gemini-2.0-flash");
     } else {
       // FALLBACK NATIVO caso nenhuma chave do usuário seja válida ou fornecida
       // No ambiente de produção, GEMINI_API_KEY deve estar configurado na Vercel/servidor
@@ -37,14 +37,23 @@ export async function POST(req: Request) {
         return new Response("Nenhuma chave configurada e fallback indisponível.", { status: 401 });
       }
       const google = createGoogleGenerativeAI({ apiKey: fallbackKey });
-      model = google("gemini-1.5-flash");
+      model = google("gemini-2.0-flash");
     }
+
+    let systemPrompt = system || "Você é a Aia, a assistente de IA integrada ao AIA OS. Ajude o usuário de forma concisa e amigável.";
+    const filteredMessages = messages.filter((m: any) => {
+      if (m.role === "system") {
+        systemPrompt = m.content;
+        return false;
+      }
+      return true;
+    });
 
     // Processar o request com streaming
     const result = streamText({
       model,
-      messages,
-      system: system || "Você é a Aia, a assistente de IA integrada ao AIA OS. Ajude o usuário de forma concisa e amigável.",
+      messages: filteredMessages,
+      system: systemPrompt,
       // tools: {} -> (Adicionar no futuro para chamadas de função / tool calling)
     });
 

@@ -20,7 +20,7 @@ export const useThemeStore = create<ThemeStore>()(
       setTheme: (t) => set({ theme: t }),
     }),
     {
-      name: "hexxa-theme",
+      name: "aia-theme",
       version: 1,
       // v1: o antigo tema "pb" virou o visual padrão do sistema
       migrate: (persisted) => {

@@ -25,8 +25,8 @@ export function BreakdownDialog({
 }) {
   const task = useTaskStore((s) => s.tasks.find((t) => t.id === taskId));
   const addMany = useTaskStore((s) => s.addManySubtasks);
-  const apiKey = useAiStore((s) => s.getActiveKey());
-  const provider = useAiStore((s) => s.provider);
+  const apiKey = useAiStore((s) => s.apiKey);
+  const model = useAiStore((s) => s.models.system);
 
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
@@ -45,7 +45,7 @@ export function BreakdownDialog({
     try {
       const result = await suggestSubtasks({
         apiKey,
-        provider,
+        model,
         task,
         extraContext: extra.trim() || undefined,
       });

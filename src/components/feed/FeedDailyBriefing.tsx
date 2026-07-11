@@ -151,12 +151,12 @@ Não use markdown, asteriscos ou listas — apenas texto corrido.`;
 
 // ── main component ────────────────────────────────────────────────────────────
 
-const CACHE_PREFIX = "hexxa-briefing-";
-const COLLAPSED_PREFIX = "hexxa-briefing-col-";
+const CACHE_PREFIX = "aia-briefing-";
+const COLLAPSED_PREFIX = "aia-briefing-col-";
 
 export function FeedDailyBriefing() {
-  const apiKey = useAiStore((s) => s.getActiveKey());
-  const provider = useAiStore((s) => s.provider);
+  const apiKey = useAiStore((s) => s.apiKey);
+  const model = useAiStore((s) => s.models.system);
 
   const [text, setText] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -191,7 +191,7 @@ export function FeedDailyBriefing() {
       setDayData(data);
       const result = await chatComplete({
         apiKey,
-        provider,
+        model,
         messages: [{ role: "user", content: buildPrompt(data) }],
         system: SYSTEM_PROMPT,
         maxTokens: 300,

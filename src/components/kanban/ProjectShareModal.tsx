@@ -16,7 +16,7 @@ export function ProjectShareModal({ boardId, onClose }: Props) {
   const board = useTaskStore((s) => s.boards.find((b) => b.id === boardId));
   const sendInvite = useTaskStore((s) => s.sendInvite);
   const meName = useProfileStore((s) => s.profile.name);
-  const meEmail = useAuthStore((s) => s.user?.email) || "usuario@hexxa.com";
+  const meEmail = useAuthStore((s) => s.user?.email) || "usuario@aia.com";
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<BoardRole>("viewer");
@@ -88,7 +88,7 @@ export function ProjectShareModal({ boardId, onClose }: Props) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="exemplo@hexxa.com"
+                  placeholder="exemplo@aia.com"
                   className="w-full bg-surface-2 border px-4 py-3 rounded-xl text-sm outline-none transition focus:border-ink/20"
                   style={{ borderColor: "var(--flat-border)" }}
                   autoFocus

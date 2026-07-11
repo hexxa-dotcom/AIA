@@ -51,7 +51,7 @@ export const useFeedStore = create<State & Actions>()(
       setHydrated: (h) => set({ hydrated: h }),
     }),
     {
-      name: "hexxa-feed",
+      name: "aia-feed",
       onRehydrateStorage: () => (state) => {
         if (state) state.setHydrated(true);
       },

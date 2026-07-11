@@ -57,8 +57,8 @@ export function CardStatementImporter({
   onClose: () => void;
 }) {
   const add   = useFinanceStore((s) => s.add);
-  const aiKey = useAiStore((s) => s.getActiveKey());
-  const aiProv = useAiStore((s) => s.provider);
+  const aiKey = useAiStore((s) => s.apiKey);
+  const aiModel = useAiStore((s) => s.models.system);
 
   const [text,    setText]    = useState("");
   const [items,   setItems]   = useState<ParsedItem[]>([]);
@@ -75,7 +75,7 @@ export function CardStatementImporter({
     try {
       const raw = await chatComplete({
         apiKey: aiKey,
-        provider: aiProv,
+        model: aiModel,
         messages: [{ role: "user", content: `Extrato:\n\n${text}` }],
         system: SYSTEM_PROMPT,
         maxTokens: 2000,

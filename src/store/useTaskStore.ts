@@ -361,7 +361,7 @@ export const useTaskStore = create<State & Actions>()(
         const newInvite: BoardInvite = { ...invite, id: nanoid(), status: "pending", createdAt: Date.now() };
         set((s) => ({ sentInvites: [...s.sentInvites, newInvite] }));
         try {
-          const key = `hexxa-board-invites-${invite.toEmail}`;
+          const key = `aia-board-invites-${invite.toEmail}`;
           const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as BoardInvite[];
           localStorage.setItem(key, JSON.stringify([...existing, newInvite]));
         } catch { /* ignore */ }
@@ -402,7 +402,7 @@ export const useTaskStore = create<State & Actions>()(
 
     }),
     {
-      name: "hexxa-tasks-store",
+      name: "aia-tasks-store",
       onRehydrateStorage: () => (state) => state?.setHydrated(),
     },
   ),

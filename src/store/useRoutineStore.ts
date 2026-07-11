@@ -59,7 +59,7 @@ export const useRoutineStore = create<State & Actions>()(
           .sort((a, b) => a.startMinute - b.startMinute),
     }),
     {
-      name: "hexxa-routine-store",
+      name: "aia-routine-store",
       onRehydrateStorage: () => (state) => state?.setHydrated(),
     },
   ),

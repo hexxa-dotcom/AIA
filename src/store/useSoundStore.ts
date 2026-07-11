@@ -16,7 +16,7 @@ export const useSoundStore = create<State>()(
       toggle: () => set((s) => ({ enabled: !s.enabled })),
       setVolume: (volume) => set({ volume }),
     }),
-    { name: "hexxa-sounds" },
+    { name: "aia-sounds" },
   ),
 );
 

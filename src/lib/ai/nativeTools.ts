@@ -2,6 +2,7 @@ import { useTaskStore } from "@/store/useTaskStore";
 import { useAgendaStore } from "@/store/useAgendaStore";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useStudiesStore } from "@/store/useStudiesStore";
+import { saveMemory } from "@/lib/ai/memory";
 
 export const NATIVE_TOOLS = [
   {
@@ -60,6 +61,17 @@ export const NATIVE_TOOLS = [
       },
       required: ["title", "type", "totalProgress"],
     },
+  },
+  {
+    name: "save_memory",
+    description: "Salva um fato importante ou preferência pessoal sobre o usuário na memória de longo prazo (ex: 'usuário prefere reuniões após as 14h', 'trabalha com Next.js').",
+    parameters: {
+      type: "object",
+      properties: {
+        content: { type: "string", description: "O fato ou preferência a ser lembrado." },
+      },
+      required: ["content"],
+    },
   }
 ];
 
@@ -108,6 +120,11 @@ export async function executeNativeTool(name: string, args: Record<string, any>)
           status: "to_do",
         });
         return "Item de estudo adicionado com sucesso!";
+      }
+      
+      case "save_memory": {
+        const id = await saveMemory(args.content);
+        return `Memória salva com sucesso! ID: ${id}`;
       }
 
       default:
