@@ -1,5 +1,5 @@
 "use client";
-import { Search, Sun, Moon, Sparkles, Focus, Minimize2 } from "lucide-react";
+import { Search, Sun, Moon, Contrast, Minimize2 } from "lucide-react";
 import { usePerfilStore } from "@/store/usePerfilStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { useCommandStore } from "@/store/useCommandStore";
@@ -47,7 +47,8 @@ export function GlobalTopbar() {
   const focusMode = useCollapseStore((s) => s.focusMode);
   const setFocusMode = useCollapseStore((s) => s.setFocusMode);
 
-  const ThemeIcon = theme === "light" ? Sun : theme === "creme" ? Sparkles : theme === "dark" ? Moon : Focus;
+  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Contrast;
+  const themeLabel = theme === "light" ? "Claro" : theme === "dark" ? "Escuro" : "Foco";
 
   return (
     <div className="flex items-center justify-between gap-4 py-2 px-1">
@@ -67,7 +68,7 @@ export function GlobalTopbar() {
 
         <button
           onClick={cycleTheme}
-          title="Alternar Tema"
+          title={`Tema: ${themeLabel} (clique para alternar)`}
           className="w-9 h-9 rounded-full grid place-items-center transition bg-surface-2 border hover:bg-ink hover:text-surface text-muted"
           style={{ borderColor: "var(--flat-border)" }}
         >

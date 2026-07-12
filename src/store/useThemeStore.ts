@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type Theme = "light" | "creme" | "dark" | "gray";
+// 3 modos: claro (branco creme + cores), escuro (inverte + cores),
+// foco (P&B, sem cores).
+export type Theme = "light" | "dark" | "foco";
 
 interface ThemeStore {
   theme: Theme;
@@ -14,19 +16,22 @@ export const useThemeStore = create<ThemeStore>()(
     (set) => ({
       theme: "light",
       toggle: () => set((s) => {
-        const next: Record<Theme, Theme> = { light: "creme", creme: "dark", dark: "gray", gray: "light" };
+        const next: Record<Theme, Theme> = { light: "dark", dark: "foco", foco: "light" };
         return { theme: next[s.theme] };
       }),
       setTheme: (t) => set({ theme: t }),
     }),
     {
       name: "aia-theme",
-      version: 1,
-      // v1: o antigo tema "pb" virou o visual padrão do sistema
+      version: 2,
+      // v2: "creme" fundiu-se ao claro; "gray" virou "foco".
       migrate: (persisted) => {
         const st = persisted as { theme?: string };
-        const validThemes = ["light", "creme", "dark", "gray"];
-        return { theme: validThemes.includes(st?.theme || "") ? st.theme : "light" } as { theme: Theme };
+        const map: Record<string, Theme> = {
+          light: "light", creme: "light",
+          dark: "dark", gray: "foco", foco: "foco",
+        };
+        return { theme: map[st?.theme || ""] || "light" };
       },
     }
   )

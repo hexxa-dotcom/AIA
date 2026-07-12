@@ -74,7 +74,7 @@ body {
   font-feature-settings: "kern" 1, "liga" 1;
   letter-spacing: 0.01em;
 
-  background: #ffffff;
+  background: #f7f5f0; /* claro: branco com tom creme */
   min-height: 100vh;
 }
 
@@ -282,12 +282,12 @@ a, button {
 }
 
 /* ── Modo Cinza (Foco) — Fundo branco como o claro, mas sem cores ── */
-[data-theme="gray"] body {
+[data-theme="foco"] body {
   background: #ffffff;
   color: #141414;
 }
 
-[data-theme="gray"] {
+[data-theme="foco"] {
   --color-lime: #141414;
   --color-lime-soft: #3d3d3d;
   --color-ink: #141414;
@@ -308,7 +308,7 @@ a, button {
   --color-info: #3d3d3d;
 }
 
-[data-theme="gray"] .glass {
+[data-theme="foco"] .glass {
   background: rgba(255, 255, 255, 0.65) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
@@ -316,40 +316,43 @@ a, button {
   box-shadow: none !important;
 }
 
-[data-theme="gray"] .flat-surface {
+[data-theme="foco"] .flat-surface {
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-color: var(--flat-border);
 }
 
-[data-theme="gray"] .glass-subtle {
+[data-theme="foco"] .glass-subtle {
   background: #f5f5f3;
   border-color: var(--flat-border);
 }
 
-[data-theme="gray"] .bg-white:not(input):not(textarea):not(select):not([type]):not([role="option"]) {
+[data-theme="foco"] .bg-white:not(input):not(textarea):not(select):not([type]):not([role="option"]) {
   background: #ffffff !important;
   border: 1px solid var(--flat-border) !important;
   box-shadow: none;
 }
 
-[data-theme="gray"] .bg-surface-2 { background: #f5f5f3 !important; }
+[data-theme="foco"] .bg-surface-2 { background: #f5f5f3 !important; }
 
-[data-theme="gray"] input, [data-theme="gray"] textarea {
+[data-theme="foco"] input, [data-theme="foco"] textarea {
   background: #ffffff !important;
   color: #141414 !important;
   border-color: var(--flat-border) !important;
 }
 
-[data-theme="gray"] *::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); }
-[data-theme="gray"] *::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.24); }
+[data-theme="foco"] *::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); }
+[data-theme="foco"] *::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.24); }
 
-[data-theme="gray"] .field-input {
+[data-theme="foco"] .field-input {
   background: #ffffff;
   border-color: var(--flat-border);
   color: #141414;
 }
-[data-theme="gray"] .field-input:focus { border-color: #141414; }
+[data-theme="foco"] .field-input:focus { border-color: #141414; }
 
-
+/* ── Modo Foco: tudo sem cores, apenas tons de preto e branco ── */
+[data-theme="foco"] body { filter: grayscale(1); }
+/* sidebar no foco: só os divisores internos, sem moldura completa */
+[data-theme="foco"] aside.flat-surface { border-color: transparent !important; }

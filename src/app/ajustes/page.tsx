@@ -9,7 +9,7 @@ import {
   Database, Download, Settings2, ChevronLeft,
   Wifi, ExternalLink, User, LogOut,
   Zap, Star, Flame, CheckSquare, Trophy, Pencil,
-  Shield, KeyRound, Eye, EyeOff, Palette, Sun, Moon, Focus, Sparkles, Bot,
+  Shield, KeyRound, Eye, EyeOff, Palette, Sun, Moon, Contrast, Bot,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAiStore } from "@/store/useAiStore";
@@ -317,18 +317,10 @@ function AppearancePanel() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
         <button onClick={() => setTheme("light")} className={`p-4 rounded-2xl border text-left transition ${theme === "light" ? "border-ink shadow-sm bg-surface-2" : "border-ink/10 hover:border-ink/30 bg-white"}`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-sm">Claro Tradicional</span>
+            <span className="font-semibold text-sm">Claro</span>
             <Sun size={16} className="text-muted" />
           </div>
-          <p className="text-[10px] text-muted">Cores vivas e fundo 100% branco.</p>
-        </button>
-
-        <button onClick={() => setTheme("creme")} className={`p-4 rounded-2xl border text-left transition ${theme === "creme" ? "border-ink shadow-sm bg-surface-2" : "border-ink/10 hover:border-ink/30 bg-white"}`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-sm">Claro Moderno</span>
-            <Sparkles size={16} className="text-muted" />
-          </div>
-          <p className="text-[10px] text-muted">Cores vivas e fundo levemente creme.</p>
+          <p className="text-[10px] text-muted">Fundo branco com tom creme e cores vivas.</p>
         </button>
 
         <button onClick={() => setTheme("dark")} className={`p-4 rounded-2xl border text-left transition ${theme === "dark" ? "border-ink shadow-sm bg-surface-2" : "border-ink/10 hover:border-ink/30 bg-white"}`}>
@@ -336,15 +328,15 @@ function AppearancePanel() {
             <span className="font-semibold text-sm">Escuro</span>
             <Moon size={16} className="text-muted" />
           </div>
-          <p className="text-[10px] text-muted">Fundo escuro com alto contraste.</p>
+          <p className="text-[10px] text-muted">Inverte: fundo escuro, alto contraste.</p>
         </button>
 
-        <button onClick={() => setTheme("gray")} className={`p-4 rounded-2xl border text-left transition ${theme === "gray" ? "border-ink shadow-sm bg-surface-2" : "border-ink/10 hover:border-ink/30 bg-white"}`}>
+        <button onClick={() => setTheme("foco")} className={`p-4 rounded-2xl border text-left transition ${theme === "foco" ? "border-ink shadow-sm bg-surface-2" : "border-ink/10 hover:border-ink/30 bg-white"}`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-sm">Foco (AIA)</span>
-            <Focus size={16} className="text-muted" />
+            <span className="font-semibold text-sm">Foco</span>
+            <Contrast size={16} className="text-muted" />
           </div>
-          <p className="text-[10px] text-muted">Apenas tons de preto e branco.</p>
+          <p className="text-[10px] text-muted">Sem cores — apenas tons de preto e branco.</p>
         </button>
       </div>
     </div>
