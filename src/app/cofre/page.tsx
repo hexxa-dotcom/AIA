@@ -22,7 +22,7 @@ export default function CofrePage() {
     <AppShell>
       <Topbar
         title="Cofre"
-        subtitle="Senhas cifradas no seu navegador. Zero-knowledge: nem eu nem o Supabase veem o conteúdo."
+        subtitle="Senhas cifradas no seu navegador. Zero-knowledge: nem eu nem o servidor veem o conteúdo."
       />
       {status === "unlocked" ? <VaultList /> : <MasterPasswordGate />}
     </AppShell>

@@ -102,7 +102,7 @@ export function MasterPasswordGate() {
             Criar cofre
           </Button>
           <p className="text-[10px] text-muted text-center">
-            Zero-knowledge: nem eu nem o Supabase conseguem ver suas senhas.
+            Zero-knowledge: nem eu nem o servidor conseguem ver suas senhas.
           </p>
         </form>
       </div>
