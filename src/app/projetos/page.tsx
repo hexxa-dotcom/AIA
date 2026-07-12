@@ -10,8 +10,10 @@ import { LayoutGrid, List, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectInbox } from "@/components/kanban/ProjectInbox";
 import { ProjectShareModal } from "@/components/kanban/ProjectShareModal";
-import { Share2, Info } from "lucide-react";
+import { Share2, Info, Users } from "lucide-react";
 import { ProjectOverview } from "@/components/kanban/ProjectOverview";
+import { TaskInviteInbox } from "@/components/task/TaskInviteInbox";
+import { useTaskInviteStore } from "@/store/useTaskInviteStore";
 
 type ViewMode = "overview" | "kanban" | "list" | "timeline";
 
@@ -19,6 +21,8 @@ export default function ProjetosPage() {
   const activeBoard = useTaskStore((s) => s.boards.find((b) => b.id === s.activeBoardId));
   const [viewMode, setViewMode] = useState<ViewMode>("overview");
   const [isSharing, setIsSharing] = useState(false);
+  const [showTaskInbox, setShowTaskInbox] = useState(false);
+  const pendingTaskInvites = useTaskInviteStore((s) => s.pendingCount());
 
   const views: { mode: ViewMode; label: string; Icon: React.ComponentType<{ size: number }> }[] = [
     { mode: "overview", label: "Visão Geral", Icon: Info },
@@ -41,6 +45,18 @@ export default function ProjetosPage() {
         subtitle={SUBTITLES[viewMode]}
         right={
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowTaskInbox(true)}
+              className="relative w-10 h-10 rounded-full flex items-center justify-center hover:bg-black/5 transition text-muted"
+              title="Tarefas compartilhadas"
+            >
+              <Users size={18} />
+              {pendingTaskInvites > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-danger text-white text-[10px] font-bold rounded-full grid place-items-center">
+                  {pendingTaskInvites}
+                </span>
+              )}
+            </button>
             <ProjectInbox />
           </div>
         }
@@ -75,6 +91,12 @@ export default function ProjetosPage() {
             <ProjectShareModal
               boardId={activeBoard.id}
               onClose={() => setIsSharing(false)}
+            />
+          )}
+
+          {showTaskInbox && (
+            <TaskInviteInbox
+              onClose={() => setShowTaskInbox(false)}
             />
           )}
         </>

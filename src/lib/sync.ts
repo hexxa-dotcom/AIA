@@ -75,7 +75,6 @@ function schedulePush(userId: string) {
     try {
       await pushNow(userId);
       lastPushedSig = sig;
-      console.log("[db sync] push ok");
     } catch (e: any) {
       console.error("[db sync] push falhou:", {
         message: e?.message,
@@ -150,17 +149,8 @@ export function useSupabaseSync() {
           // Seed acabou de subir local; força push pra subir pro banco remoto
           lastPushedSig = "__force__";
           schedulePush(user.id);
-          console.log("[db sync] seed criado, agendando push inicial");
         } else {
           lastPushedSig = snapshotSig();
-          console.log("[db sync] pull ok:", {
-            boards: data.boards.length,
-            tasks: data.tasks.length,
-            routines: data.routines.length,
-            expenses: data.expenses?.length || 0,
-            appointments: data.appointments?.length || 0,
-            studies: data.studies?.length || 0,
-          });
         }
       } catch (e) {
         console.error("[db sync] pull falhou:", e);

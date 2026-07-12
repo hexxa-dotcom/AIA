@@ -141,7 +141,8 @@ function stripToolCall(text: string) {
 }
 
 export function ChatPanel() {
-  const apiKey = useAiStore((s) => s.apiKey);
+  const provider = useAiStore((s) => s.provider);
+  const apiKey = useAiStore((s) => s.provider === "groq" ? s.groqKey : s.apiKey);
   const model = useAiStore((s) => s.models.chat);
   const assistantName = useAiStore((s) => s.assistantName);
   const messages = useAiStore((s) => s.messages);
@@ -218,6 +219,7 @@ ${NATIVE_TOOLS.map((t) => `• ${t.name}: ${t.description} (Parâmetros: ${JSON.
 
       for (let round = 0; round < 5; round++) {
         const reply = await chatComplete({
+          provider,
           model,
           apiKey,
           messages: loopHistory,

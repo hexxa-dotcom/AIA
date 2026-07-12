@@ -19,6 +19,7 @@ import {
 } from "@/store/useFinanceStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 const GROUPS: Record<ExpenseCategory, string[]> = {
   personal: [
@@ -71,6 +72,9 @@ export function ExpenseEditor({
   const existing = id ? expenses.find((e) => e.id === id) : null;
 
   const [name, setName] = useState(existing?.name ?? "");
+  const [tipoLancamento, setTipoLancamento] = useState<"despesa" | "receita" | "investimento">(
+    existing?.isIncome ? "receita" : existing?.isInvestimento ? "investimento" : "despesa"
+  );
   const [amount, setAmount] = useState(existing ? String(existing.amount) : "");
   const [dueDay, setDueDay] = useState(existing ? String(existing.dueDay) : "");
   const [category, setCategory] = useState<ExpenseCategory>(
@@ -182,6 +186,8 @@ export function ExpenseEditor({
         tipo === "parcela" || tipo === "unico" ? parcelaInicio : undefined,
       isCartao,
       cartaoNome: isCartao ? cartaoNome.trim() || undefined : undefined,
+      isIncome: tipoLancamento === "receita",
+      isInvestimento: tipoLancamento === "investimento",
       imovel: category === "casa" && imovel ? imovel : undefined,
       familyMember:
         category === "familia" && familyMember ? familyMember : undefined,
@@ -208,6 +214,8 @@ export function ExpenseEditor({
           cartaoNome: payload.cartaoNome,
           imovel: payload.imovel,
           familyMember: payload.familyMember,
+          isIncome: payload.isIncome,
+          isInvestimento: payload.isInvestimento,
         };
         shareEmails.forEach((toEmail) => {
           sendInvite({ fromEmail: user.email, toEmail, expense: inviteData });
@@ -259,6 +267,27 @@ export function ExpenseEditor({
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 p-5 space-y-5">
+          {/* Tipo de Lançamento */}
+          <div>
+            <span className={LBL}>Tipo de Lançamento</span>
+            <div className="flex gap-1 bg-surface-2 rounded-full p-1 w-full border border-ink/5 shadow-sm">
+              {(["despesa", "receita", "investimento"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTipoLancamento(t)}
+                  className={cn(
+                    "flex-1 py-2 rounded-full text-xs font-bold transition-all duration-200 capitalize",
+                    tipoLancamento === t 
+                      ? "bg-ink text-surface shadow-sm" 
+                      : "text-muted hover:text-ink hover:bg-black/5"
+                  )}
+                >
+                  {t === "receita" ? "Entrada" : t}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* Categoria */}
           <div>
             <span className={LBL}>Categoria</span>

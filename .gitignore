@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# runtime state (gerado em disco pelo MCP — nunca versionar)
+.aia-mcp-state.json

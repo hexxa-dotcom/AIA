@@ -1,34 +1,58 @@
 "use client";
-import { useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Flame, Star } from "lucide-react";
+import { Flame, Star, ThermometerSun } from "lucide-react";
 import { useGameStore } from "@/store/useGameStore";
 import { levelProgress } from "@/lib/xp";
 import { ActiveTimerWidget } from "@/components/task/ActiveTimerWidget";
-import { useAuthStore } from "@/store/useAuthStore";
-import { useProfileStore } from "@/store/useProfileStore";
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Bom dia";
-  if (hour < 18) return "Boa tarde";
-  return "Boa noite";
-}
+import { useThemeStore } from "@/store/useThemeStore";
 
 function TopbarFull({ title, subtitle, right }: TopbarProps) {
-  const user = useAuthStore((s) => s.user);
-  const profile = useProfileStore((s) => s.profile);
-  const userName = profile?.name || user?.email?.split("@")[0] || "Usuário";
-  const greeting = useMemo(() => getGreeting(), []);
   const xp = useGameStore((s) => s.xp);
   const streak = useGameStore((s) => s.streakDays);
   const todayXp = useGameStore((s) => s.todayXp);
   const { level, needed, pct } = levelProgress(xp);
+  const zenMode = useThemeStore((s) => s.zenMode);
+
+  const [weatherTemp, setWeatherTemp] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchWeather() {
+      try {
+        let lat = -23.55;
+        let lon = -46.63;
+        try {
+          const ipRes = await fetch("https://ipapi.co/json/");
+          const ipData = await ipRes.json();
+          if (ipData.latitude && ipData.longitude) {
+            lat = ipData.latitude;
+            lon = ipData.longitude;
+          }
+        } catch (e) {}
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const weatherData = await weatherRes.json();
+        if (weatherData?.current_weather?.temperature != null) {
+          setWeatherTemp(Math.round(weatherData.current_weather.temperature));
+        }
+      } catch (e) {
+        setWeatherTemp(22);
+      }
+    }
+    fetchWeather();
+  }, []);
+
+  const formattedDate = useMemo(() => {
+    return new Date().toLocaleDateString("pt-BR", {
+      weekday: "short",
+      day: "numeric",
+      month: "short"
+    }).replace(".", "");
+  }, []);
 
   return (
-    <header className="sticky top-2 sm:top-4 z-40 mb-4 sm:mb-6 glass border rounded-3xl px-6 py-4 flex flex-col xl:flex-row xl:items-center justify-between gap-6" style={{ borderColor: "var(--flat-border)", boxShadow: "0 4px 24px -12px rgba(0,0,0,0.1)" }}>
+    <header className="relative mb-4 sm:mb-6 glass border rounded-3xl px-6 py-4 flex flex-col xl:flex-row xl:items-center justify-between gap-6" style={{ borderColor: "var(--flat-border)", boxShadow: "0 4px 24px -12px rgba(0,0,0,0.1)" }}>
       
-      {/* Lado Esquerdo - Título e Saudação */}
+      {/* Lado Esquerdo - Título e Clima */}
       <div className="flex items-center gap-5 shrink-0">
         <div className="shrink-0">
           <h1 className="text-xl sm:text-2xl font-bold text-ink leading-tight truncate">{title}</h1>
@@ -38,43 +62,49 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
         <div className="w-px h-6 bg-ink/20 rounded-full" />
 
         <div className="flex flex-col justify-center">
-          <div className="flex items-center gap-1.5 text-sm sm:text-base leading-tight">
-            <span className="text-muted">{greeting},</span>
-            <span className="font-semibold text-ink">{userName}</span>
+          <div className="flex items-center gap-2 text-xs text-muted font-medium capitalize select-none">
+            <span>{formattedDate}</span>
+            <span>•</span>
+            <span className="flex items-center gap-0.5 normal-case">
+              <ThermometerSun size={13} className="text-warning animate-pulse shrink-0" />
+              {weatherTemp !== null ? `${weatherTemp}°C` : "..."}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Centro - Gamificação Solta */}
       <div className="flex-1 flex justify-center">
-        <div className="hidden lg:flex items-center gap-6">
-          <div className="w-8 h-8 rounded-full bg-ink text-lime grid place-items-center text-sm font-bold shrink-0 shadow-sm">
-            {level}
-          </div>
-          <div className="flex flex-col gap-1.5 w-32">
-            <div className="flex justify-between text-[10px] sm:text-xs text-muted">
-              <span className="font-bold text-ink">{xp} XP</span>
-              <span className="font-medium">próx. {Math.round(needed)}</span>
+        {!zenMode && (
+          <div className="hidden lg:flex items-center gap-6">
+            <div className="w-8 h-8 rounded-full bg-ink text-lime grid place-items-center text-sm font-bold shrink-0 shadow-sm">
+              {level}
             </div>
-            <div className="h-1.5 rounded-full bg-ink/10 overflow-hidden shadow-inner">
-              <motion.div
-                className="h-full xp-shimmer rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-              />
+            <div className="flex flex-col gap-1.5 w-32">
+              <div className="flex justify-between text-[10px] sm:text-xs text-muted">
+                <span className="font-bold text-ink">{xp} XP</span>
+                <span className="font-medium">próx. {Math.round(needed)}</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-ink/10 overflow-hidden shadow-inner">
+                <motion.div
+                  className="h-full xp-shimmer rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+            <div className="w-px h-6 bg-ink/10 mx-1" />
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Flame size={15} className="text-warning" />
+              <span className="font-bold text-ink">{streak}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Star size={15} className="text-lime" fill="currentColor" />
+              <span className="font-bold text-ink">+{todayXp}</span>
             </div>
           </div>
-          <div className="w-px h-6 bg-ink/10 mx-1" />
-          <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <Flame size={15} className="text-warning" />
-            <span className="font-bold text-ink">{streak}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <Star size={15} className="text-lime" fill="currentColor" />
-            <span className="font-bold text-ink">+{todayXp}</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Lado Direito - Controles e Espaço */}
@@ -88,7 +118,7 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
 
 function TopbarSimple({ title, subtitle, right }: TopbarProps) {
   return (
-    <header className="sticky top-2 sm:top-4 z-40 mb-4 sm:mb-6 glass border rounded-3xl px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-4" style={{ borderColor: "var(--flat-border)", boxShadow: "0 4px 24px -12px rgba(0,0,0,0.1)" }}>
+    <header className="relative mb-4 sm:mb-6 glass border rounded-3xl px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-4" style={{ borderColor: "var(--flat-border)", boxShadow: "0 4px 24px -12px rgba(0,0,0,0.1)" }}>
       {/* Lado Esquerdo */}
       <div className="shrink-0 max-w-[60%]">
         <h1 className="text-xl sm:text-2xl font-bold text-ink leading-tight truncate">{title}</h1>

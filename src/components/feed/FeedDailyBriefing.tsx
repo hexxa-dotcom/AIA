@@ -19,6 +19,7 @@ import { useTaskStore } from "@/store/useTaskStore";
 import { useRoutineStore } from "@/store/useRoutineStore";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useAiStore } from "@/store/useAiStore";
+import { usePerfilStore } from "@/store/usePerfilStore";
 import { chatComplete } from "@/lib/ai/chat";
 import { getTodaysMessage } from "@/lib/motivational";
 
@@ -155,7 +156,8 @@ const CACHE_PREFIX = "aia-briefing-";
 const COLLAPSED_PREFIX = "aia-briefing-col-";
 
 export function FeedDailyBriefing() {
-  const apiKey = useAiStore((s) => s.apiKey);
+  const provider = useAiStore((s) => s.provider);
+  const apiKey = useAiStore((s) => s.provider === "groq" ? s.groqKey : s.apiKey);
   const model = useAiStore((s) => s.models.system);
 
   const [text, setText] = useState<string | null>(null);
@@ -165,7 +167,8 @@ export function FeedDailyBriefing() {
   const [collapsed, setCollapsed] = useState(false); // card recolhido
   const [dayData, setDayData] = useState<DayData | null>(null);
   const generatingRef = useRef(false);
-  const message = useMemo(() => getTodaysMessage(), []);
+  const motivationalStyle = usePerfilStore((s) => s.motivationalStyle ?? "famous");
+  const message = useMemo(() => getTodaysMessage(motivationalStyle), [motivationalStyle]);
 
   async function generate(force = false) {
     if (generatingRef.current) return;
@@ -189,11 +192,21 @@ export function FeedDailyBriefing() {
     try {
       const data = collectDay();
       setDayData(data);
+      
+      const stylePrompts = {
+        biblia: "Por favor, inclua um Provérbio bíblico inspirador e sua referência (ex: Provérbios 16:3) adequado para motivar o dia do usuário.",
+        stoic: "Por favor, inclua uma citação estoica clássica (ex: Sêneca, Marco Aurélio, Epicteto) adequada para inspirar foco, controle mental e resiliência.",
+        startup: "Por favor, inclua uma frase de mentalidade startup, inovação, execução ágil ou negócios (ex: Steve Jobs, Reid Hoffman, Paul Graham, etc.).",
+        famous: "Por favor, inclua uma citação famosa motivadora geral (ex: Albert Einstein, Winston Churchill, etc.).",
+      };
+      const finalSystemPrompt = `${SYSTEM_PROMPT}\n${stylePrompts[motivationalStyle] || stylePrompts.famous}`;
+
       const result = await chatComplete({
+        provider,
         apiKey,
         model,
         messages: [{ role: "user", content: buildPrompt(data) }],
-        system: SYSTEM_PROMPT,
+        system: finalSystemPrompt,
         maxTokens: 300,
         temperature: 0.65,
       });

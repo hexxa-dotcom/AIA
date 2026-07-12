@@ -19,6 +19,7 @@ import {
   isExpenseActiveInMonth,
   parcelaLabel,
 } from "@/store/useFinanceStore";
+import { cn } from "@/lib/utils";
 
 function fmt(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -348,16 +349,30 @@ function ExpenseRow({
               {CAT_LABEL[expense.category]}
             </span>
           )}
+          {expense.isIncome && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-success/10 text-success border border-success/20">
+              entrada
+            </span>
+          )}
+          {expense.isInvestimento && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-purple-500/10 text-purple-500 border border-purple-500/20">
+              investimento
+            </span>
+          )}
         </div>
       </div>
 
       {/* amount + actions */}
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <p
-          className="text-sm font-bold tabular-nums"
-          style={{ color: isPaid ? "#1a1a1a" : "#141414" }}
+          className={cn(
+            "text-sm font-bold tabular-nums",
+            expense.isIncome && !isPaid ? "text-success" :
+            expense.isInvestimento && !isPaid ? "text-purple-500" :
+            isPaid ? "text-muted" : "text-ink"
+          )}
         >
-          {fmt(expense.amount)}
+          {expense.isIncome ? "+" : ""} {fmt(expense.amount)}
         </p>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button

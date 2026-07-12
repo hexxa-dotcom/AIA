@@ -299,64 +299,71 @@ function QuickNoteCreator() {
   );
 }
 
-export default function NotasPage() {
+export function NotesTabContent() {
   const notes       = useNotesStore((s) => s.notes);
   const pinnedCount = notes.filter((n) => n.pinned).length;
   const [filter, setFilter] = useState<"todas" | "fixadas">("todas");
 
   const shown = filter === "fixadas" ? notes.filter((n) => n.pinned) : notes;
 
-  // Render em colunas estilo Masonry simplificado (CSS columns)
+  return (
+    <div className="max-w-[1200px] mx-auto w-full">
+      {/* Tabs de Filtro Padrão do Sistema */}
+      <div className="flex gap-1 mb-6 bg-white rounded-full p-1 w-fit border shadow-sm" style={{ borderColor: "var(--flat-border)" }}>
+        {(["todas", "fixadas"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={cn(
+              "flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition",
+              filter === f ? "bg-ink text-surface shadow-sm" : "text-muted hover:text-ink hover:bg-surface-2"
+            )}
+          >
+            {f === "todas" ? "Todas as notas" : "Fixadas no Feed"}
+          </button>
+        ))}
+      </div>
+
+      {/* Input Rápido estilo Keep */}
+      <QuickNoteCreator />
+
+      {/* Grid / Masonry de Notas */}
+      {shown.length === 0 ? (
+        <div
+          className="rounded-3xl p-12 text-center mt-8 border border-dashed"
+          style={{ borderColor: "var(--flat-border)" }}
+        >
+          <StickyNote size={36} className="mx-auto mb-3 text-muted/30" />
+          <p className="text-sm font-semibold text-muted">
+            {filter === "fixadas" ? "Nenhuma nota fixada no Feed." : "Suas notas aparecerão aqui."}
+          </p>
+        </div>
+      ) : (
+        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+          <AnimatePresence>
+            {shown.map((note) => (
+              <div key={note.id} className="break-inside-avoid">
+                <NoteCard note={note} pinnedCount={pinnedCount} />
+              </div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function NotasPage() {
+  const notes       = useNotesStore((s) => s.notes);
+  const pinnedCount = notes.filter((n) => n.pinned).length;
+
   return (
     <AppShell>
       <Topbar 
         title="Notas Rápidas" 
         subtitle={`${notes.length} nota${notes.length !== 1 ? "s" : ""} · ${pinnedCount}/${MAX_PINNED} fixadas`}
       />
-      
-      <div className="max-w-[1200px] mx-auto w-full">
-        {/* Tabs de Filtro Padrão do Sistema */}
-        <div className="flex gap-1 mb-6 bg-white rounded-full p-1 w-fit border shadow-sm" style={{ borderColor: "var(--flat-border)" }}>
-          {(["todas", "fixadas"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={cn(
-                "flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition",
-                filter === f ? "bg-ink text-surface shadow-sm" : "text-muted hover:text-ink hover:bg-surface-2"
-              )}
-            >
-              {f === "todas" ? "Todas as notas" : "Fixadas no Feed"}
-            </button>
-          ))}
-        </div>
-
-        {/* Input Rápido estilo Keep */}
-        <QuickNoteCreator />
-
-        {/* Grid / Masonry de Notas */}
-        {shown.length === 0 ? (
-          <div
-            className="rounded-3xl p-12 text-center mt-8 border border-dashed"
-            style={{ borderColor: "var(--flat-border)" }}
-          >
-            <StickyNote size={36} className="mx-auto mb-3 text-muted/30" />
-            <p className="text-sm font-semibold text-muted">
-              {filter === "fixadas" ? "Nenhuma nota fixada no Feed." : "Suas notas aparecerão aqui."}
-            </p>
-          </div>
-        ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
-            <AnimatePresence>
-              {shown.map((note) => (
-                <div key={note.id} className="break-inside-avoid">
-                  <NoteCard note={note} pinnedCount={pinnedCount} />
-                </div>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
+      <NotesTabContent />
     </AppShell>
   );
 }

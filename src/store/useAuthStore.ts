@@ -58,7 +58,6 @@ export const useAuthStore = create<State & Actions>((set, get) => ({
         });
       } catch (e: any) {
         try {
-          console.log("[auth] Criando sessão anônima automática no Appwrite...");
           await account.createAnonymousSession();
           const sessionUser = await account.get();
           set({

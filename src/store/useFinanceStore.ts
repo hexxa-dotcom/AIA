@@ -29,6 +29,9 @@ export interface RecurringExpense {
   // sharing
   sharedWith?: string[];
   sharedBy?: string;
+  // novos campos
+  isIncome?: boolean;
+  isInvestimento?: boolean;
 }
 
 // ─── Invite ──────────────────────────────────────────────────────────────────

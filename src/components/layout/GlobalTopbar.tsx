@@ -51,7 +51,7 @@ export function GlobalTopbar() {
   const themeLabel = theme === "light" ? "Claro" : theme === "dark" ? "Escuro" : "Foco";
 
   return (
-    <div className="flex items-center justify-between gap-4 py-2 px-1">
+    <div className="sticky top-0 z-30 flex items-center justify-between gap-4 py-2 px-1 bg-surface-1/80 backdrop-blur-md">
       {/* Espaço vazio se precisar depois */}
       <div className="flex items-center gap-2" />
 

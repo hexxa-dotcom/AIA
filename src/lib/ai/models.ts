@@ -18,9 +18,19 @@ export const OPENROUTER_MODELS: ModelOption[] = [
   { id: "anthropic/claude-3.5-sonnet", label: "Claude 3.5 Sonnet", note: "premium" },
 ];
 
+export const GROQ_MODELS: ModelOption[] = [
+  { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Versatile)", note: "Recomendado - Excelente qualidade" },
+  { id: "llama-3.3-70b-specdec", label: "Llama 3.3 70B SpecDec", note: "Super rápido" },
+  { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B (Instant)", note: "Ultra veloz" },
+  { id: "mixtral-8x7b-32768", label: "Mixtral 8x7b", note: "Bom para raciocínio" },
+  { id: "gemma2-9b-it", label: "Gemma 2 9B", note: "Modelo do Google no Groq" },
+];
+
 // Papéis de modelo: "system" gerencia o sistema (ações, insights — barato),
 // "chat" conversa no copilot (qualidade importa mais).
 export const DEFAULT_MODELS = {
   system: "deepseek/deepseek-chat",
   chat: "openai/gpt-4o-mini",
+  groqSystem: "llama-3.1-8b-instant",
+  groqChat: "llama-3.3-70b-versatile",
 } as const;

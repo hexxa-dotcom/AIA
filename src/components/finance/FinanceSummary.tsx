@@ -1,16 +1,18 @@
 "use client";
-import { Share2, Sparkles } from "lucide-react";
+import { useMemo } from "react";
+import { Share2, Sparkles, DollarSign, ArrowUpRight, ArrowDownRight, PieChart } from "lucide-react";
 import {
   useFinanceStore,
   isExpenseActiveInMonth,
 } from "@/store/useFinanceStore";
+import { cn } from "@/lib/utils";
 
 function fmt(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 function fmtShort(v: number) {
-  if (v >= 1_000_000) return `R$${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$${(v / 1_000).toFixed(1)}k`;
+  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `R$ ${(v / 1_000).toFixed(1)}k`;
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
@@ -43,28 +45,46 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
   const pendingInvites = useFinanceStore((s) => s.pendingCount());
   const expenses = all.filter((e) => isExpenseActiveInMonth(e, yearMonth));
 
-  const catTotals = {
-    personal: expenses
-      .filter((e) => e.category === "personal")
-      .reduce((a, e) => a + e.amount, 0),
-    casa: expenses
-      .filter((e) => e.category === "casa")
-      .reduce((a, e) => a + e.amount, 0),
-    familia: expenses
-      .filter((e) => e.category === "familia")
-      .reduce((a, e) => a + e.amount, 0),
-  };
+  // Despesas puras (filtrando fora receitas e investimentos)
+  const despesasExpenses = useMemo(() => {
+    return expenses.filter((e) => !e.isIncome && !e.isInvestimento);
+  }, [expenses]);
+
+  // Entradas de dinheiro (Receitas)
+  const totalReceitas = useMemo(() => {
+    return expenses.filter((e) => e.isIncome).reduce((a, e) => a + e.amount, 0);
+  }, [expenses]);
+
+  // Investimentos lançados na planilha de finanças
+  const totalInvestimentos = useMemo(() => {
+    return expenses.filter((e) => e.isInvestimento).reduce((a, e) => a + e.amount, 0);
+  }, [expenses]);
+
+  const catTotals = useMemo(() => {
+    return {
+      personal: despesasExpenses
+        .filter((e) => e.category === "personal")
+        .reduce((a, e) => a + e.amount, 0),
+      casa: despesasExpenses
+        .filter((e) => e.category === "casa")
+        .reduce((a, e) => a + e.amount, 0),
+      familia: despesasExpenses
+        .filter((e) => e.category === "familia")
+        .reduce((a, e) => a + e.amount, 0),
+    };
+  }, [despesasExpenses]);
+
   const total = catTotals.personal + catTotals.casa + catTotals.familia;
-  const paid = expenses
+  const paid = despesasExpenses
     .filter((e) => e.payments[yearMonth])
     .reduce((a, e) => a + e.amount, 0);
   const pending = total - paid;
   const paidPct = total > 0 ? (paid / total) * 100 : 0;
-  const sharedCount = expenses.filter(
+  const sharedCount = despesasExpenses.filter(
     (e) => (e.sharedWith?.length ?? 0) > 0 || e.sharedBy,
   ).length;
 
-  const custoVida = expenses
+  const custoVida = despesasExpenses
     .filter((e) => e.tipo === "recorrente")
     .reduce((a, e) => a + e.amount, 0);
 
@@ -73,9 +93,9 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
   const highestCatLabel = highestCat ? CATS.find((c) => c.key === highestCat[0])?.label : "Nenhuma";
 
   const categoryPending = {
-    personal: expenses.filter((e) => e.category === "personal" && !e.payments[yearMonth]).length,
-    casa: expenses.filter((e) => e.category === "casa" && !e.payments[yearMonth]).length,
-    familia: expenses.filter((e) => e.category === "familia" && !e.payments[yearMonth]).length,
+    personal: despesasExpenses.filter((e) => e.category === "personal" && !e.payments[yearMonth]).length,
+    casa: despesasExpenses.filter((e) => e.category === "casa" && !e.payments[yearMonth]).length,
+    familia: despesasExpenses.filter((e) => e.category === "familia" && !e.payments[yearMonth]).length,
   };
   const pendingEntries = Object.entries(categoryPending).sort((a, b) => b[1] - a[1]);
   const needsAttentionCat = pendingEntries[0] && pendingEntries[0][1] > 0 
@@ -90,75 +110,106 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
   }
 
   return (
-    <div className="space-y-3">
-      {/* ── Compact hero card ── */}
-      <div className="glass rounded-3xl p-4 relative overflow-hidden">
-        {/* top row: label + percentage */}
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <p className="text-[10px] uppercase tracking-wider font-bold mb-1 text-muted">
-              Total do mês
-            </p>
-            <p className="text-[1.7rem] font-bold leading-none tracking-tight text-ink">
-              {fmt(total)}
-            </p>
-          </div>
-          <div className="text-right mt-1">
-            <p className="text-[10px] text-muted">
-              {Math.round(paidPct)}% quitado
-            </p>
-            <p
-              className="text-xs font-bold mt-0.5"
-              style={{
-                color:
-                  paidPct >= 100
-                    ? "var(--color-success)"
-                    : "var(--color-muted)",
-              }}
-            >
-              {expenses.length} despesa{expenses.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* ── CARD UNIFICADO: TOTAL DO MÊS E INSIGHTS (PRETO PREMIUM) ── */}
+      <div className="bg-ink rounded-3xl p-5 shadow-sm text-white border border-white/10 relative overflow-hidden">
+        {/* Glow decorativo de fundo */}
+        <div className="absolute -right-10 -top-10 w-40 h-40 bg-success/10 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch relative z-10 text-left">
+          
+          {/* Coluna 1: Total do Mês e Progresso de Pagamentos (col-span-7) */}
+          <div className="md:col-span-7 flex flex-col justify-between gap-4 border-b md:border-b-0 md:border-r border-white/10 pb-5 md:pb-0 md:pr-6">
+            <div>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest font-extrabold text-slate-400">
+                    Total do mês (Despesas)
+                  </p>
+                  <p className="text-3xl font-black tracking-tight text-white mt-1.5">
+                    {fmt(total)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase tracking-widest font-extrabold px-2 py-0.5 rounded bg-success/20 text-success">
+                    {Math.round(paidPct)}% quitado
+                  </span>
+                  <p className="text-[10px] text-slate-400 mt-1 font-semibold">
+                    {despesasExpenses.length} despesa{despesasExpenses.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
 
-        {/* progress bar */}
-        <div
-          className="h-1.5 rounded-full overflow-hidden mb-3"
-          style={{ background: "var(--color-surface-3)" }}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${paidPct}%`,
-              background:
-                paidPct >= 100 ? "var(--color-success)" : "var(--color-ink)",
-            }}
-          />
-        </div>
+              {/* Barra de progresso do pagamento das despesas */}
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-4">
+                <div
+                  className="h-full rounded-full transition-all duration-700 bg-white"
+                  style={{ width: `${paidPct}%` }}
+                />
+              </div>
+            </div>
 
-        {/* bottom stats strip */}
-        <div className="grid grid-cols-3 gap-1">
-          <StatChip
-            label="Pago"
-            value={fmtShort(paid)}
-            color="var(--color-success)"
-          />
-          <StatChip
-            label="Pendente"
-            value={fmtShort(pending)}
-            color="var(--color-warning)"
-          />
-          <StatChip
-            label="Itens"
-            value={String(expenses.length)}
-            color="var(--color-muted)"
-          />
+            {/* Chips de Estatísticas */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5">
+                <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Pago</p>
+                <p className="text-sm font-extrabold text-success mt-0.5">{fmtShort(paid)}</p>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5">
+                <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Pendente</p>
+                <p className="text-sm font-extrabold text-warning mt-0.5">{fmtShort(pending)}</p>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5">
+                <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Itens</p>
+                <p className="text-sm font-extrabold text-white mt-0.5">{despesasExpenses.length}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Coluna 2: Insights do Mês e Fluxos Financeiros (col-span-5) */}
+          <div className="md:col-span-5 flex flex-col justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <Sparkles size={14} className="text-success animate-pulse" />
+                <h3 className="font-bold text-xs uppercase tracking-widest text-white">Insights & Fluxos</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
+                  <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Custo de Vida</p>
+                  <p className="text-sm font-bold text-white mt-0.5">{fmtShort(custoVida)}</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
+                  <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Maior Gasto</p>
+                  <p className="text-sm font-bold text-white mt-0.5 truncate">{highestCatLabel}</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
+                  <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Entradas (Mês)</p>
+                  <p className="text-sm font-bold text-success mt-0.5">{fmtShort(totalReceitas)}</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
+                  <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Investido (Mês)</p>
+                  <p className="text-sm font-bold text-purple-400 mt-0.5">{fmtShort(totalInvestimentos)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 p-3 rounded-xl text-xs">
+              <div>
+                <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Dica & Atenção</p>
+                <p className="text-[11px] text-slate-200 leading-relaxed font-semibold mt-0.5">
+                  {dica}
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
       {/* ── Category breakdown ── */}
       {total > 0 && (
-        <div className="bg-white rounded-3xl p-4 shadow-sm">
+        <div className="bg-white rounded-3xl p-4 shadow-sm text-left">
           <p className="text-[10px] uppercase tracking-widest font-bold text-muted mb-3">
             Divisão por categoria
           </p>
@@ -180,7 +231,7 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
 
           {/* Category tiles */}
           <div className="grid grid-cols-3 gap-2">
-            {CATS.map(({ key, label, emoji, color, bg }) => {
+            {CATS.map(({ key, label, color, bg }) => {
               const val = catTotals[key];
               const pct = total > 0 ? Math.round((val / total) * 100) : 0;
               return (
@@ -189,8 +240,6 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
                   className="rounded-2xl p-3 relative"
                   style={{ background: bg }}
                 >
-                  <span className="text-xl block mb-2 leading-none">
-                  </span>
                   <p
                     className="text-[13px] font-bold leading-tight truncate"
                     style={{ color }}
@@ -211,42 +260,10 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
         </div>
       )}
 
-      {/* ── Insights ── */}
-      <div className="bg-ink rounded-3xl p-4 shadow-sm text-surface border" style={{ borderColor: "var(--flat-border)" }}>
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles size={16} className="text-lime" />
-          <h3 className="font-bold text-sm">Insights do Mês</h3>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-2 mb-2">
-           <div className="bg-surface-2/10 p-3 rounded-2xl border border-surface-2/5">
-              <p className="text-[9px] uppercase tracking-wider text-surface-2/60 font-bold mb-1">Custo de Vida</p>
-              <p className="text-lg font-bold text-lime leading-tight">{fmt(custoVida)}</p>
-           </div>
-           <div className="bg-surface-2/10 p-3 rounded-2xl border border-surface-2/5">
-              <p className="text-[9px] uppercase tracking-wider text-surface-2/60 font-bold mb-1">Maior Gasto</p>
-              <p className="text-lg font-bold text-info leading-tight">{highestCatLabel}</p>
-           </div>
-        </div>
-
-        <div className="bg-surface-2/10 p-3 rounded-2xl space-y-3 border border-surface-2/5">
-           <div>
-              <p className="text-[9px] uppercase tracking-wider text-surface-2/60 font-bold mb-0.5">Atenção</p>
-              <p className="text-[11px] text-surface-2/90 font-medium">
-                Os gastos com <span className="font-bold text-surface">{needsAttentionCat}</span> precisam de acompanhamento.
-              </p>
-           </div>
-           <div>
-              <p className="text-[9px] uppercase tracking-wider text-surface-2/60 font-bold mb-0.5">Dica para o próximo mês</p>
-              <p className="text-[11px] text-surface-2/90 font-medium">{dica}</p>
-           </div>
-        </div>
-      </div>
-
       {/* ── Shared / invite notice ── */}
       {(sharedCount > 0 || pendingInvites > 0) && (
         <div
-          className="flex items-center gap-3 rounded-2xl px-4 py-3"
+          className="flex items-center gap-3 rounded-2xl px-4 py-3 text-left"
           style={{
             background: "var(--color-surface-2)",
             border: "1px solid var(--flat-border)",
@@ -260,33 +277,6 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
           </p>
         </div>
       )}
-    </div>
-  );
-}
-
-function StatChip({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: string;
-}) {
-  return (
-    <div
-      className="rounded-xl px-2 py-2"
-      style={{ background: "var(--color-surface-2)" }}
-    >
-      <p className="text-[9px] uppercase tracking-wider mb-0.5 text-muted">
-        {label}
-      </p>
-      <p
-        className="text-[13px] font-bold tabular-nums leading-tight"
-        style={{ color }}
-      >
-        {value}
-      </p>
     </div>
   );
 }

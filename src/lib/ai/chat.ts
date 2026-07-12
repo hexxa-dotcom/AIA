@@ -4,8 +4,9 @@ export interface ChatMessage {
 }
 
 export interface ChatRequest {
+  provider: string;
   model: string;
-  // Opcional: quando vazia, o servidor usa OPENROUTER_API_KEY do .env.local.
+  // Opcional: quando vazia, o servidor usa a chave de API padrão configurada.
   apiKey?: string;
   messages: ChatMessage[];
   system?: string;
@@ -23,6 +24,7 @@ export class AiError extends Error {
 }
 
 export async function chatComplete({
+  provider,
   model,
   apiKey,
   messages,
@@ -38,6 +40,7 @@ export async function chatComplete({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      provider,
       model,
       apiKey,
       messages: fullMessages,

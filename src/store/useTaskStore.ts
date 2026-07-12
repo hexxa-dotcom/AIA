@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { genId as nanoid } from "@/lib/id";
 import type { Board, ColumnKey, Subtask, Task, TimeEntry, Recurrence, BoardInvite } from "@/lib/types";
 import { makeSeedData } from "@/lib/seed";
+import { usePerfilStore } from "./usePerfilStore";
 
 interface State {
   boards: Board[];
@@ -100,7 +101,8 @@ export const useTaskStore = create<State & Actions>()(
 
       createBoard: (name, emoji) => {
         const id = nanoid();
-        const newBoard: Board = { id, name, emoji, createdAt: Date.now() };
+        const scope = usePerfilStore.getState().perfil;
+        const newBoard: Board = { id, name, emoji, scope, createdAt: Date.now() };
         set((s) => ({ boards: [...s.boards, newBoard], activeBoardId: id }));
         return id;
       },

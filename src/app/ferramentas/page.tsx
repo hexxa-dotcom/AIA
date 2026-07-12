@@ -5,10 +5,11 @@ import { Topbar } from "@/components/layout/Topbar";
 import { ToolsList } from "@/components/tools/ToolsList";
 import { ToolsEditor } from "@/components/tools/ToolsEditor";
 import { Button } from "@/components/ui/Button";
-import { Plus, Link2, FileText, FolderOpen } from "lucide-react";
+import { Plus, Link2, FileText, FolderOpen, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotesTabContent } from "@/app/notas/page";
 
-type Tab = "links" | "arquivos" | "documentos";
+type Tab = "links" | "arquivos" | "documentos" | "notas";
 
 function DrivePlaceholder({ title, description }: { title: string, description: string }) {
   return (
@@ -41,11 +42,12 @@ export default function DocsPage() {
     { id: "links", label: "Links", Icon: Link2 },
     { id: "arquivos", label: "Arquivos", Icon: FolderOpen },
     { id: "documentos", label: "Documentos", Icon: FileText },
+    { id: "notas", label: "Notas", Icon: StickyNote },
   ];
 
   return (
     <AppShell>
-      <Topbar title="Docs" subtitle="Links, arquivos e documentos do Google Drive" />
+      <Topbar title="Docs" subtitle="Links, arquivos, documentos e notas rápidas do sistema" />
 
       <div className="flex gap-1 mb-4 bg-white rounded-full p-1.5 w-fit">
         {tabs.map(({ id, label, Icon }) => (
@@ -82,6 +84,12 @@ export default function DocsPage() {
           title="Meus Documentos" 
           description="Acesse facilmente suas planilhas, apresentações e textos do Google Docs integrados no AIA OS." 
         />
+      )}
+
+      {tab === "notas" && (
+        <div className="animate-fadeIn mt-2">
+          <NotesTabContent />
+        </div>
       )}
     </AppShell>
   );

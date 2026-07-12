@@ -20,8 +20,6 @@ import { useRoutineTicker } from "@/hooks/useRoutineTicker";
 import { GlobalTopbar } from "./GlobalTopbar";
 import { PomodoroAlert } from "./PomodoroAlert";
 import { BottomNav } from "./BottomNav";
-import { TaskInviteInbox } from "@/components/task/TaskInviteInbox";
-import { useTaskInviteStore } from "@/store/useTaskInviteStore";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { useCommandStore } from "@/store/useCommandStore";
 import { useCommandShortcut } from "@/hooks/useCommandShortcut";
@@ -53,8 +51,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const initAuth = useAuthStore((s) => s.init);
   const router = useRouter();
   const pathname = usePathname();
-  const [showTaskInbox, setShowTaskInbox] = useState(false);
-  const pendingTaskInvites = useTaskInviteStore((s) => s.pendingCount());
   const commandOpen = useCommandStore((s) => s.open);
   const onboardingCompleted = useOnboardingStore((s) => s.completed);
 
@@ -115,7 +111,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       <div className="hidden md:block">
         <Sidebar />
       </div>
-      <main className="flex-1 min-w-0 flex flex-col gap-3 pb-20 md:pb-3 overflow-x-hidden pt-2 sm:pt-4 pr-2 sm:pr-4">
+      <main className="flex-1 min-w-0 flex flex-col gap-3 pb-20 md:pb-3 pt-2 sm:pt-4 pr-2 sm:pr-4" style={{ overflowX: "clip" }}>
         <GlobalTopbar />
         
         <AnimatePresence mode="wait">
@@ -134,24 +130,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       
       <PomodoroAlert />
       <BottomNav />
-
-      {/* Task invite inbox floating button */}
-      <button
-        onClick={() => setShowTaskInbox(true)}
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-12 h-12 rounded-2xl bg-ink text-lime shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
-        title="Tarefas compartilhadas"
-      >
-        <Users size={18} />
-        {pendingTaskInvites > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-danger text-white rounded-full text-[10px] font-bold grid place-items-center">
-            {pendingTaskInvites > 9 ? "9+" : pendingTaskInvites}
-          </span>
-        )}
-      </button>
-
-      <AnimatePresence>
-        {showTaskInbox && <TaskInviteInbox onClose={() => setShowTaskInbox(false)} />}
-      </AnimatePresence>
 
       <AnimatePresence>
         {commandOpen && <CommandPalette />}

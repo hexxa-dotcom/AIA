@@ -7,6 +7,10 @@ import { useTaskStore } from "./useTaskStore";
 
 interface State {
   active?: ActiveTimer;
+  pomodoroMinutes: number;
+  shortBreakMinutes: number;
+  longBreakMinutes: number;
+  longBreakThreshold: number;
 }
 
 interface Actions {
@@ -15,12 +19,25 @@ interface Actions {
   resume: () => void;
   stop: () => number;
   elapsedSec: () => number;
+  setPomodoroMinutes: (mins: number) => void;
+  setShortBreakMinutes: (mins: number) => void;
+  setLongBreakMinutes: (mins: number) => void;
+  setLongBreakThreshold: (count: number) => void;
 }
 
 export const useTimerStore = create<State & Actions>()(
   persist(
     (set, get) => ({
       active: undefined,
+      pomodoroMinutes: 25,
+      shortBreakMinutes: 5,
+      longBreakMinutes: 15,
+      longBreakThreshold: 4,
+
+      setPomodoroMinutes: (mins) => set({ pomodoroMinutes: mins }),
+      setShortBreakMinutes: (mins) => set({ shortBreakMinutes: mins }),
+      setLongBreakMinutes: (mins) => set({ longBreakMinutes: mins }),
+      setLongBreakThreshold: (count) => set({ longBreakThreshold: count }),
 
       start: (taskId) => {
         const cur = get().active;

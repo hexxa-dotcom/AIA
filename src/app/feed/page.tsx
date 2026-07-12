@@ -12,35 +12,45 @@ import { FeedProjectsWidget } from "@/components/feed/FeedProjectsWidget";
 import { FeedNewsWidget } from "@/components/feed/FeedNewsWidget";
 import { FeedRoutineWidget } from "@/components/feed/FeedRoutineWidget";
 import { FeedVaultWidget } from "@/components/feed/FeedVaultWidget";
+import { FeedChallengesWidget } from "@/components/feed/FeedChallengesWidget";
 import { Topbar } from "@/components/layout/Topbar";
+import { useFeedConfigStore } from "@/store/useFeedConfigStore";
 
 export default function FeedPage() {
+  const config = useFeedConfigStore((s) => s.config);
+
   return (
     <AppShell>
       <Topbar variant="full" title="Feed" />
-      <div className="flex flex-col gap-4">
-        <FeedDailyBriefing />
-      </div>
+      
+      {config.briefing && (
+        <div className="flex flex-col gap-4">
+          <FeedDailyBriefing />
+        </div>
+      )}
 
       {/* Grid principal: masonry (CSS columns) — equilibra a altura das colunas
           sozinho, sem vãos, independente da altura de cada widget.
           Ordem por prioridade: dia primeiro, depois áreas da vida. */}
       <div className="mt-4 gap-4 lg:gap-6 columns-1 lg:columns-2 [&>*]:mb-4 lg:[&>*]:mb-6 [&>*]:break-inside-avoid">
-        <FeedDailyProgress />
-        <FeedRoutineWidget />
-        <FeedAgendaToday />
-        <FeedTimeWidget />
-        <FeedProjectsWidget />
-        <FeedEstudosWidget />
-        <FeedFinanceWidget />
-        <FeedVaultWidget />
-        <FeedNewsWidget />
+        {config.progress && <FeedDailyProgress />}
+        {config.routine && <FeedRoutineWidget />}
+        {config.challenges && <FeedChallengesWidget />}
+        {config.agenda && <FeedAgendaToday />}
+        {config.time && <FeedTimeWidget />}
+        {config.projects && <FeedProjectsWidget />}
+        {config.estudos && <FeedEstudosWidget />}
+        {config.finance && <FeedFinanceWidget />}
+        {config.vault && <FeedVaultWidget />}
+        {config.news && <FeedNewsWidget />}
       </div>
 
       {/* Base full-width */}
-      <div className="mt-4">
-        <FeedQuickNotes />
-      </div>
+      {config.quickNotes && (
+        <div className="mt-4">
+          <FeedQuickNotes />
+        </div>
+      )}
     </AppShell>
   );
 }

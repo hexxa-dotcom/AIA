@@ -3,9 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { useTimerStore } from "@/store/useTimerStore";
 import { useSoundStore } from "@/store/useSoundStore";
 import { fireNotification } from "@/lib/reminders/notifier";
-
-const POMODORO_MS = 25 * 60 * 1000; // 25 min
-const LONG_BREAK_THRESHOLD = 4; // after 4 pomodoros
+import { usePerfilStore } from "@/store/usePerfilStore";
+import { getTodaysMessage } from "@/lib/motivational";
 
 export type AlertLevel = "break" | "long_break";
 
@@ -17,6 +16,15 @@ export interface PomodoroAlert {
 
 export function usePomodoroAlert() {
   const active = useTimerStore((s) => s.active);
+  const pomodoroMinutes = useTimerStore((s) => s.pomodoroMinutes ?? 25);
+  const longBreakThreshold = useTimerStore((s) => s.longBreakThreshold ?? 4);
+
+  const motivationalStyle = usePerfilStore((s) => s.motivationalStyle ?? "famous");
+  const motivationalFrequency = usePerfilStore((s) => s.motivationalFrequency ?? "daily");
+
+  const POMODORO_MS = pomodoroMinutes * 60 * 1000;
+  const LONG_BREAK_THRESHOLD = longBreakThreshold;
+
   const sessionStartRef = useRef<number | null>(null);
   const pomodoroCountRef = useRef(0);
   const alertedRef = useRef(false);
@@ -58,10 +66,17 @@ export function usePomodoroAlert() {
           level === "long_break"
             ? "Pausa longa merecida!"
             : "Hora de uma pausa rápida!";
-        const body =
+        
+        let body =
           level === "long_break"
             ? `${pomodoros} pomodoros (${sessionMinutes} min). Descanse 15–30 minutos.`
             : `${sessionMinutes} minutos de foco. Pause 5 min — você volta mais produtivo.`;
+
+        if (motivationalFrequency === "after_focus") {
+          const quote = getTodaysMessage(motivationalStyle);
+          body += `\n\n"${quote.text}" — ${quote.author}`;
+        }
+        
         fireNotification(title, { body, tag: `break-${Date.now()}` });
 
         setTimeout(

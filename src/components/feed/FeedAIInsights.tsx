@@ -85,10 +85,11 @@ Data de hoje: ${now.toLocaleDateString("pt-BR")}
 }
 
 export function FeedAIInsights() {
-  const apiKey = useAiStore((s) => s.apiKey);
+  const provider = useAiStore((s) => s.provider);
+  const apiKey = useAiStore((s) => s.provider === "groq" ? s.groqKey : s.apiKey);
   const model = useAiStore((s) => s.models.system);
   const assistantName = useAiStore((s) => s.assistantName);
-  const config = { apiKey, model };
+  const config = { provider, apiKey, model };
   const [insights, setInsights] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -101,6 +102,7 @@ export function FeedAIInsights() {
     try {
       const ctx = buildContext();
       const result = await chatComplete({
+        provider: config.provider,
         apiKey: config.apiKey,
         model: config.model,
         maxTokens: 600,
