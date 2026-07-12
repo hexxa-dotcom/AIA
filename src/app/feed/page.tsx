@@ -22,35 +22,23 @@ export default function FeedPage() {
         <FeedDailyBriefing />
       </div>
 
-      {/* Grid Principal: Alinhamento Arquitetural Limpo */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 mt-2">
-        
-        {/* COLUNA ESQUERDA: Ações do Dia (Foco, Tempo, Tarefas) */}
-        <div className="lg:col-span-5 flex flex-col gap-4 lg:gap-6">
-          <FeedDailyProgress />
-          <FeedRoutineWidget />
-          <FeedTimeWidget />
-          <FeedAgendaToday />
-        </div>
-
-        {/* COLUNA DIREITA: Gestão, Conhecimento e Projetos */}
-        <div className="lg:col-span-7 flex flex-col gap-4 lg:gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-             <FeedFinanceWidget />
-             <FeedVaultWidget />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-             <FeedEstudosWidget />
-             <FeedProjectsWidget />
-          </div>
-
-          <FeedNewsWidget />
-        </div>
+      {/* Grid principal: masonry (CSS columns) — equilibra a altura das colunas
+          sozinho, sem vãos, independente da altura de cada widget.
+          Ordem por prioridade: dia primeiro, depois áreas da vida. */}
+      <div className="mt-4 gap-4 lg:gap-6 columns-1 lg:columns-2 [&>*]:mb-4 lg:[&>*]:mb-6 [&>*]:break-inside-avoid">
+        <FeedDailyProgress />
+        <FeedRoutineWidget />
+        <FeedAgendaToday />
+        <FeedTimeWidget />
+        <FeedProjectsWidget />
+        <FeedEstudosWidget />
+        <FeedFinanceWidget />
+        <FeedVaultWidget />
+        <FeedNewsWidget />
       </div>
 
-      {/* Base Full-Width */}
-      <div className="mt-2">
+      {/* Base full-width */}
+      <div className="mt-4">
         <FeedQuickNotes />
       </div>
     </AppShell>
