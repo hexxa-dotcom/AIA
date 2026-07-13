@@ -17,12 +17,12 @@ export const NAV_BY_PERFIL: Record<Perfil, NavItem[]> = {
     { href: "/quadro",      label: "Quadro",       Icon: PenLine },
   ],
   pessoal: [
+    { href: "/rotina",     label: "Rotina",     Icon: Clock },
     { href: "/financas",   label: "Finanças",   Icon: Wallet },
     { href: "/estudos",    label: "Estudos",    Icon: BookOpen },
     { href: "/compras",    label: "Wish List",  Icon: ShoppingBag },
     { href: "/ferramentas",label: "Docs",       Icon: FolderClosed },
     { href: "/space",      label: "Space",      Icon: Layers },
-    { href: "/rotina",     label: "Rotina",     Icon: Clock },
   ],
 };
 

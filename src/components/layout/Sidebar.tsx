@@ -3,12 +3,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, Settings, Zap, Leaf } from "lucide-react";
+import { Sparkles, Settings, Zap, Leaf, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePerfilStore } from "@/store/usePerfilStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useProfileStore } from "@/store/useProfileStore";
 import { NAV_BY_PERFIL, perfilOfPath, type NavItem } from "@/lib/nav";
+import { checkIsAdmin } from "@/store/useAdminStore";
 
 function SideLink({
   href, label, Icon, active, expanded,
@@ -189,6 +190,7 @@ export function Sidebar() {
   const profile = useProfileStore((s) => s.profile);
   const userName = profile?.name || user?.email?.split("@")[0] || "Usuário";
   const initial = userName.charAt(0).toUpperCase();
+  const isAdmin = checkIsAdmin(user?.email);
 
   // navegar direto para uma página do outro perfil sincroniza o seletor
   useEffect(() => {

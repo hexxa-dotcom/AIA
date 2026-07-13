@@ -5,13 +5,19 @@ import {
   Zap, Star, Flame, CheckSquare, Trophy, LogOut, 
   Edit3, Check, Trash2, Plus, Lock, Heart, Award, 
   Smile, User2, Building2, Briefcase, Eye, EyeOff,
-  ChevronDown, ChevronUp, Pencil, Circle, CheckCircle2, Flag, X, Target
+  ChevronDown, ChevronUp, Pencil, Circle, CheckCircle2, Flag, X, Target, Shield, KeyRound,
+  Github, Globe, RefreshCw, Database, Bot, Cloud, Settings2, Clock
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useGameStore } from "@/store/useGameStore";
 import { useTaskStore } from "@/store/useTaskStore";
 import { usePerfilStore } from "@/store/usePerfilStore";
 import { useProfileStore, type SkillItem, type GoalItem } from "@/store/useProfileStore";
+import { useAdminStore, checkIsAdmin, type UserProfile } from "@/store/useAdminStore";
+import { getAppwrite } from "@/lib/appwrite";
+import { ID } from "appwrite";
+import { useAiStore } from "@/store/useAiStore";
+import { OPENROUTER_MODELS, GROQ_MODELS } from "@/lib/ai/models";
 import { useVaultStore } from "@/store/useVaultStore";
 import { usePurposeStore } from "@/store/usePurposeStore";
 import { useGoalsStore, type PersonalGoal, type GoalCategory } from "@/store/useGoalsStore";
@@ -701,6 +707,693 @@ function PerfilConquistasWidget() {
   );
 }
 
+function AdminProfilePanel() {
+  const currentUser = useAuthStore((s) => s.user);
+  const isAdmin = checkIsAdmin(currentUser?.email);
+  
+  const { settings, updateSetting, users, addUser, updateUserRole, removeUser, systemTools, updateSystemTools } = useAdminStore();
+
+  if (!isAdmin) {
+    return (
+      <div className="glass rounded-3xl p-8 text-center text-muted border border-flat flex flex-col items-center">
+        <Shield size={24} className="mb-2 opacity-50 text-danger animate-pulse" />
+        <p className="font-bold text-xs text-danger uppercase tracking-wider">Acesso Restrito 🛡️</p>
+        <p className="text-[10px] text-muted mt-1.5 max-w-[280px]">
+          Esta seção é exclusiva para o administrador do sistema.
+        </p>
+      </div>
+    );
+  }
+
+  // States: User invite
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPass, setNewUserPass] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "convidado">("convidado");
+  const [addingUser, setAddingUser] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteSuccess, setInviteSuccess] = useState("");
+  const [loadingInvite, setLoadingInvite] = useState(false);
+
+  // States: Cloud Credentials
+  const [vercelUrl, setVercelUrl] = useState(systemTools.vercelUrl);
+  const [vercelToken, setVercelToken] = useState(systemTools.vercelToken);
+  const [gitRepo, setGitRepo] = useState(systemTools.gitRepo);
+  const [gitToken, setGitToken] = useState(systemTools.gitToken);
+  const [appwriteEndpoint, setAppwriteEndpoint] = useState(systemTools.appwriteEndpoint);
+  const [appwriteProjectId, setAppwriteProjectId] = useState(systemTools.appwriteProjectId);
+  const [appwriteDatabaseId, setAppwriteDatabaseId] = useState(systemTools.appwriteDatabaseId);
+  const [appwriteApiKey, setAppwriteApiKey] = useState(systemTools.appwriteApiKey);
+
+  const [showVercelToken, setShowVercelToken] = useState(false);
+  const [showGitToken, setShowGitToken] = useState(false);
+  const [showAppwriteKey, setShowAppwriteKey] = useState(false);
+  const [toolsSaved, setToolsSaved] = useState(false);
+
+  // States: System Intelligence
+  const aiProvider = useAiStore((s) => s.provider);
+  const setAiProvider = useAiStore((s) => s.setProvider);
+  const aiApiKey = useAiStore((s) => s.apiKey);
+  const setAiApiKey = useAiStore((s) => s.setApiKey);
+  const aiGroqKey = useAiStore((s) => s.groqKey);
+  const setAiGroqKey = useAiStore((s) => s.setGroqKey);
+  const aiModels = useAiStore((s) => s.models);
+  const setAiModel = useAiStore((s) => s.setModel);
+
+  const [showAiKey, setShowAiKey] = useState(false);
+  const [aiSaved, setAiSaved] = useState(false);
+
+  // Local briefing state initialization
+  const [briefingHour, setBriefingHour] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("aia-briefing-hour") ?? "08:00" : "08:00"
+  );
+  const [briefingIncFin, setBriefingIncFin] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("aia-briefing-inc-finances") !== "false" : true
+  );
+  const [briefingIncRot, setBriefingIncRot] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("aia-briefing-inc-routine") !== "false" : true
+  );
+
+  // Sub-tabs inside admin panel
+  const [adminSubTab, setAdminSubTab] = useState<"politicas" | "usuarios" | "inteligencia" | "credenciais">("politicas");
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    setInviteError("");
+    setInviteSuccess("");
+    setLoadingInvite(true);
+
+    const emailClean = newUserEmail.trim().toLowerCase();
+    const nameClean = newUserName.trim();
+
+    if (!emailClean || !newUserPass || !nameClean) {
+      setInviteError("Preencha todos os campos.");
+      setLoadingInvite(false);
+      return;
+    }
+
+    try {
+      const { account } = getAppwrite();
+      if (!account) throw new Error("Banco de dados Appwrite não configurado.");
+      
+      const newId = ID.unique();
+      // Registra a conta no Appwrite
+      await account.create(newId, emailClean, newUserPass, nameClean);
+      
+      // Adiciona na store local de controle
+      addUser({
+        id: newId,
+        email: emailClean,
+        name: nameClean,
+        role: newUserRole,
+      });
+
+      setInviteSuccess(`Usuário ${emailClean} convidado com sucesso!`);
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPass("");
+      setNewUserRole("convidado");
+      setAddingUser(false);
+    } catch (err: any) {
+      setInviteError(err?.message || "Falha ao registrar no Appwrite Cloud.");
+    } finally {
+      setLoadingInvite(false);
+    }
+  }
+
+  function handleSaveTools(e: React.FormEvent) {
+    e.preventDefault();
+    updateSystemTools({
+      vercelUrl: vercelUrl.trim(),
+      vercelToken: vercelToken.trim(),
+      gitRepo: gitRepo.trim(),
+      gitToken: gitToken.trim(),
+      appwriteEndpoint: appwriteEndpoint.trim(),
+      appwriteProjectId: appwriteProjectId.trim(),
+      appwriteDatabaseId: appwriteDatabaseId.trim(),
+      appwriteApiKey: appwriteApiKey.trim(),
+    });
+    setToolsSaved(true);
+    setTimeout(() => setToolsSaved(false), 2000);
+  }
+
+  function handleSaveAiConfig() {
+    localStorage.setItem("aia-briefing-hour", briefingHour);
+    localStorage.setItem("aia-briefing-inc-finances", String(briefingIncFin));
+    localStorage.setItem("aia-briefing-inc-routine", String(briefingIncRot));
+    setAiSaved(true);
+    setTimeout(() => setAiSaved(false), 2000);
+  }
+
+  const handleAiProviderChange = (newProvider: "openrouter" | "groq") => {
+    setAiProvider(newProvider);
+    if (newProvider === "groq") {
+      setAiModel("system", "llama-3.1-8b-instant");
+      setAiModel("chat", "llama-3.3-70b-versatile");
+    } else {
+      setAiModel("system", "deepseek/deepseek-chat");
+      setAiModel("chat", "openai/gpt-4o-mini");
+    }
+  };
+
+  return (
+    <div className="glass rounded-3xl p-5 border border-ink/5 flex flex-col gap-5 text-left animate-fadeIn">
+      {/* Header do painel admin */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink/5 pb-3">
+        <div className="flex items-center gap-2">
+          <Shield size={18} className="text-ink shrink-0" />
+          <div>
+            <h2 className="font-bold text-sm text-ink">Painel Administrativo</h2>
+            <p className="text-[10px] text-muted">Controle de perfis, acesso a configurações e credenciais de nuvem.</p>
+          </div>
+        </div>
+
+        {/* Sub-abas de navegação admin */}
+        <div className="flex bg-surface-2 p-1 rounded-xl self-start sm:self-center border border-flat flex-wrap gap-0.5">
+          {(["politicas", "usuarios", "inteligencia", "credenciais"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setAdminSubTab(tab)}
+              className={cn(
+                "px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-colors",
+                adminSubTab === tab ? "bg-ink text-surface shadow-sm" : "text-muted hover:text-ink"
+              )}
+            >
+              {tab === "politicas" ? "Políticas" : tab === "usuarios" ? "Usuários" : tab === "inteligencia" ? "Inteligência" : "Nuvem & Keys"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Sub-Aba 1: Políticas de Convidados */}
+      {adminSubTab === "politicas" && (
+        <div className="space-y-4 animate-fadeIn">
+          <p className="text-xs text-muted leading-relaxed">
+            Defina quais telas e configurações avançadas os usuários convidados poderão acessar no sistema.
+          </p>
+
+          <div className="space-y-3 pt-1">
+            {/* Modelo de IA */}
+            <div className="flex items-center justify-between p-3.5 bg-surface-2/60 border border-flat rounded-2xl">
+              <div className="space-y-0.5 max-w-[75%]">
+                <span className="text-xs font-bold text-ink block">Alteração de Modelos de IA</span>
+                <p className="text-[10px] text-muted leading-relaxed">
+                  Permite que convidados troquem o provedor de IA (OpenRouter/Groq) ou alterem chaves de API.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                <input
+                  type="checkbox"
+                  checked={settings.allowGuestsChangeAiModel}
+                  onChange={(e) => updateSetting("allowGuestsChangeAiModel", e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ink"></div>
+              </label>
+            </div>
+
+            {/* Resetar dados */}
+            <div className="flex items-center justify-between p-3.5 bg-surface-2/60 border border-flat rounded-2xl">
+              <div className="space-y-0.5 max-w-[75%]">
+                <span className="text-xs font-bold text-ink block">Apagar e Resetar Dados</span>
+                <p className="text-[10px] text-muted leading-relaxed">
+                  Permite que convidados apaguem permanentemente os dados de finanças, tarefas e histórico local.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                <input
+                  type="checkbox"
+                  checked={settings.allowGuestsResetData}
+                  onChange={(e) => updateSetting("allowGuestsResetData", e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ink"></div>
+              </label>
+            </div>
+
+            {/* Servidores MCP */}
+            <div className="flex items-center justify-between p-3.5 bg-surface-2/60 border border-flat rounded-2xl">
+              <div className="space-y-0.5 max-w-[75%]">
+                <span className="text-xs font-bold text-ink block">Configuração de Servidores MCP</span>
+                <p className="text-[10px] text-muted leading-relaxed">
+                  Permite que convidados vejam ou alterem ferramentas externas instaladas via MCP.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                <input
+                  type="checkbox"
+                  checked={settings.allowGuestsManageMcp}
+                  onChange={(e) => updateSetting("allowGuestsManageMcp", e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ink"></div>
+              </label>
+            </div>
+
+            {/* Integrações */}
+            <div className="flex items-center justify-between p-3.5 bg-surface-2/60 border border-flat rounded-2xl">
+              <div className="space-y-0.5 max-w-[75%]">
+                <span className="text-xs font-bold text-ink block">Configuração de Banco de Dados</span>
+                <p className="text-[10px] text-muted leading-relaxed">
+                  Permite que convidados configurem ou vejam os tokens de sincronização do Supabase ou Appwrite.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                <input
+                  type="checkbox"
+                  checked={settings.allowGuestsConfigureIntegrations}
+                  onChange={(e) => updateSetting("allowGuestsConfigureIntegrations", e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ink"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-Aba 2: Gerenciador de Usuários e Perfis */}
+      {adminSubTab === "usuarios" && (
+        <div className="space-y-4 animate-fadeIn">
+          <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+            <span className="text-xs font-bold text-ink">Lista de Usuários Cadastrados ({users.length})</span>
+            <button
+              onClick={() => setAddingUser(!addingUser)}
+              className="text-[10px] font-bold text-ink hover:underline flex items-center gap-1 shrink-0"
+            >
+              <Plus size={12} /> {addingUser ? "Cancelar" : "Convidar Usuário"}
+            </button>
+          </div>
+
+          {/* Form para adicionar usuário / convite */}
+          {addingUser && (
+            <form onSubmit={handleInvite} className="bg-surface-2 p-4 border border-flat rounded-2xl space-y-3.5">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink">Novo Convite de Usuário</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Nome completo"
+                  required
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  className="px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                />
+                <input
+                  type="email"
+                  placeholder="E-mail do convidado"
+                  required
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                />
+                <input
+                  type="password"
+                  placeholder="Senha Inicial"
+                  required
+                  value={newUserPass}
+                  onChange={(e) => setNewUserPass(e.target.value)}
+                  className="px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                />
+                <select
+                  value={newUserRole}
+                  onChange={(e) => setNewUserRole(e.target.value as "admin" | "convidado")}
+                  className="px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                >
+                  <option value="convidado">Nível: Convidado (Acesso restrito)</option>
+                  <option value="admin">Nível: Admin (Acesso total)</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1.5">
+                <button
+                  type="submit"
+                  disabled={loadingInvite}
+                  className="px-4 py-1.5 bg-ink text-surface rounded-xl text-xs font-bold hover:opacity-95 transition disabled:opacity-50"
+                >
+                  {loadingInvite ? "Enviando Convite..." : "Criar Usuário"}
+                </button>
+              </div>
+
+              {inviteError && <p className="text-[10px] text-danger font-bold">{inviteError}</p>}
+            </form>
+          )}
+
+          {inviteSuccess && (
+            <p className="text-[10px] text-success font-bold bg-success/10 p-2.5 rounded-xl">{inviteSuccess}</p>
+          )}
+
+          {/* Listagem de Usuários */}
+          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+            {users.map((u) => {
+              const isMe = u.email.toLowerCase() === currentUser?.email?.toLowerCase();
+              return (
+                <div key={u.id} className="p-3 bg-surface-2/65 border border-flat rounded-2xl flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-ink truncate block">{u.name}</span>
+                      {isMe && <span className="text-[8px] uppercase tracking-wider font-extrabold bg-ink text-surface px-1.5 py-0.5 rounded">Eu</span>}
+                    </div>
+                    <p className="text-[10px] text-muted mt-0.5 truncate">{u.email} · Criado em: {u.joinedAt}</p>
+                  </div>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <select
+                      value={u.role}
+                      disabled={isMe || u.id === "admin-default"}
+                      onChange={(e) => updateUserRole(u.id, e.target.value as "admin" | "convidado")}
+                      className="px-2.5 py-1 bg-white border border-flat rounded-xl text-[10px] font-bold text-ink outline-none focus:ring-1 focus:ring-ink/20"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="convidado">Convidado</option>
+                    </select>
+
+                    <button
+                      onClick={() => {
+                        if (confirm(`Excluir permanentemente o usuário "${u.name}"?`)) removeUser(u.id);
+                      }}
+                      disabled={isMe || u.id === "admin-default"}
+                      className="p-1.5 rounded-lg hover:bg-danger/10 text-muted hover:text-danger disabled:opacity-30 disabled:hover:bg-transparent transition"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Sub-Aba 3: Configurações de Inteligência do Sistema */}
+      {adminSubTab === "inteligencia" && (
+        <div className="space-y-4 animate-fadeIn">
+          <p className="text-xs text-muted leading-relaxed">
+            Configure as chaves de API, modelos de Inteligência Artificial e parâmetros do Resumo Diário (Briefing da Aia).
+          </p>
+
+          <div className="space-y-4">
+            {/* Provedor e Chaves */}
+            <div className="bg-surface-2/40 border border-flat rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-flat pb-2">
+                <Bot size={14} className="text-muted" />
+                <span className="text-xs font-bold text-ink">Provedor & Chaves</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted">Provedor de IA</label>
+                  <select
+                    value={aiProvider}
+                    onChange={(e) => handleAiProviderChange(e.target.value as "openrouter" | "groq")}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                  >
+                    <option value="openrouter">OpenRouter (Multiprovedores)</option>
+                    <option value="groq">Groq Cloud (Llama 3.3 / Rápido)</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted flex items-center justify-between">
+                    {aiProvider === "groq" ? "Chave Groq API Key" : "Chave OpenRouter API Key"}
+                    <button
+                      type="button"
+                      onClick={() => setShowAiKey(!showAiKey)}
+                      className="text-muted hover:text-ink transition"
+                    >
+                      {showAiKey ? <EyeOff size={11} /> : <Eye size={11} />}
+                    </button>
+                  </label>
+                  <input
+                    type={showAiKey ? "text" : "password"}
+                    placeholder={aiProvider === "groq" ? "gsk_..." : "sk-or-v1-..."}
+                    value={aiProvider === "groq" ? aiGroqKey : aiApiKey}
+                    onChange={(e) => aiProvider === "groq" ? setAiGroqKey(e.target.value) : setAiApiKey(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modelos Recomendados */}
+            <div className="bg-surface-2/40 border border-flat rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-flat pb-2">
+                <Settings2 size={14} className="text-muted" />
+                <span className="text-xs font-bold text-ink">Modelos de IA Selecionados</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted">Modelo de Briefing (Rápido)</label>
+                  <input
+                    list="ai-briefing-models"
+                    value={aiModels.system}
+                    onChange={(e) => setAiModel("system", e.target.value)}
+                    placeholder="vendor/modelo"
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                  <datalist id="ai-briefing-models">
+                    {aiProvider === "groq" 
+                      ? GROQ_MODELS.map((m) => <option key={m.id} value={m.id} />) 
+                      : OPENROUTER_MODELS.map((m) => <option key={m.id} value={m.id} />)}
+                  </datalist>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted">Modelo do Chat Copilot (Completo)</label>
+                  <input
+                    list="ai-chat-models"
+                    value={aiModels.chat}
+                    onChange={(e) => setAiModel("chat", e.target.value)}
+                    placeholder="vendor/modelo"
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                  <datalist id="ai-chat-models">
+                    {aiProvider === "groq" 
+                      ? GROQ_MODELS.map((m) => <option key={m.id} value={m.id} />) 
+                      : OPENROUTER_MODELS.map((m) => <option key={m.id} value={m.id} />)}
+                  </datalist>
+                </div>
+              </div>
+            </div>
+
+            {/* Configuração de Resumo Diário (Briefing) */}
+            <div className="bg-surface-2/40 border border-flat rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-flat pb-2">
+                <Clock size={14} className="text-muted" />
+                <span className="text-xs font-bold text-ink">Resumo Diário (Briefing da Aia)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted block mb-1 font-semibold">Horário de Geração</label>
+                  <select
+                    value={briefingHour}
+                    onChange={(e) => setBriefingHour(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs font-semibold outline-none text-ink focus:ring-2 focus:ring-ink/10"
+                  >
+                    {["05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00"].map((h) => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted block mb-1 font-semibold">Dados a Incluir no Resumo</label>
+                  <div className="flex flex-col gap-1.5 pt-0.5">
+                    <label className="flex items-center gap-2 text-xs text-ink font-semibold select-none cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={briefingIncFin} 
+                        onChange={(e) => setBriefingIncFin(e.target.checked)} 
+                        className="rounded text-ink focus:ring-ink" 
+                      />
+                      Dados Financeiros do Mês
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-ink font-semibold select-none cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={briefingIncRot} 
+                        onChange={(e) => setBriefingIncRot(e.target.checked)} 
+                        className="rounded text-ink focus:ring-ink" 
+                      />
+                      Metas de Hábitos e Rotinas
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end items-center gap-3 pt-2 border-t border-ink/5">
+            {aiSaved && (
+              <span className="text-[10px] text-success font-bold">Configurações de Inteligência salvas!</span>
+            )}
+            <button
+              onClick={handleSaveAiConfig}
+              className="px-5 py-2 bg-ink text-surface rounded-xl text-xs font-bold hover:opacity-95 transition"
+            >
+              Salvar Inteligência
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-Aba 4: Chaves e Integrações de Nuvem */}
+      {adminSubTab === "credenciais" && (
+        <form onSubmit={handleSaveTools} className="space-y-4 animate-fadeIn">
+          <p className="text-xs text-muted leading-relaxed">
+            Configure as chaves de API e URLs das ferramentas de infraestrutura (Vercel, Git/Github e Appwrite) para deploys e sincronizações em nuvem.
+          </p>
+
+          <div className="space-y-4 pt-1">
+            {/* Seção Vercel */}
+            <div className="bg-surface-2/40 border border-flat rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-flat pb-2">
+                <Globe size={14} className="text-muted" />
+                <span className="text-xs font-bold text-ink">Integração Vercel</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted">URL do Deploy</label>
+                  <input
+                    type="url"
+                    placeholder="https://seu-projeto.vercel.app"
+                    value={vercelUrl}
+                    onChange={(e) => setVercelUrl(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted flex items-center justify-between">
+                    Token da API Vercel
+                    <button
+                      type="button"
+                      onClick={() => setShowVercelToken(!showVercelToken)}
+                      className="text-muted hover:text-ink transition"
+                    >
+                      {showVercelToken ? <EyeOff size={11} /> : <Eye size={11} />}
+                    </button>
+                  </label>
+                  <input
+                    type={showVercelToken ? "text" : "password"}
+                    placeholder="Vercel CLI / Personal Token"
+                    value={vercelToken}
+                    onChange={(e) => setVercelToken(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Seção GitHub/Git */}
+            <div className="bg-surface-2/40 border border-flat rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-flat pb-2">
+                <Github size={14} className="text-muted" />
+                <span className="text-xs font-bold text-ink">Repositório Git & GitHub</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted">Repositório Remoto</label>
+                  <input
+                    type="text"
+                    placeholder="usuario/repositorio"
+                    value={gitRepo}
+                    onChange={(e) => setGitRepo(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted flex items-center justify-between">
+                    GitHub Personal Access Token (PAT)
+                    <button
+                      type="button"
+                      onClick={() => setShowGitToken(!showGitToken)}
+                      className="text-muted hover:text-ink transition"
+                    >
+                      {showGitToken ? <EyeOff size={11} /> : <Eye size={11} />}
+                    </button>
+                  </label>
+                  <input
+                    type={showGitToken ? "text" : "password"}
+                    placeholder="ghp_..."
+                    value={gitToken}
+                    onChange={(e) => setGitToken(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Seção Appwrite */}
+            <div className="bg-surface-2/40 border border-flat rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-flat pb-2">
+                <Database size={14} className="text-muted" />
+                <span className="text-xs font-bold text-ink">Banco Appwrite Cloud</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted">Endpoint da API</label>
+                  <input
+                    type="url"
+                    placeholder="https://cloud.appwrite.io/v1"
+                    value={appwriteEndpoint}
+                    onChange={(e) => setAppwriteEndpoint(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted">Project ID</label>
+                  <input
+                    type="text"
+                    placeholder="Appwrite project ID"
+                    value={appwriteProjectId}
+                    onChange={(e) => setAppwriteProjectId(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted">Database ID</label>
+                  <input
+                    type="text"
+                    placeholder="Appwrite database ID"
+                    value={appwriteDatabaseId}
+                    onChange={(e) => setAppwriteDatabaseId(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-extrabold text-muted flex items-center justify-between">
+                    Admin API Secret Key
+                    <button
+                      type="button"
+                      onClick={() => setShowAppwriteKey(!showAppwriteKey)}
+                      className="text-muted hover:text-ink transition"
+                    >
+                      {showAppwriteKey ? <EyeOff size={11} /> : <Eye size={11} />}
+                    </button>
+                  </label>
+                  <input
+                    type={showAppwriteKey ? "text" : "password"}
+                    placeholder="Chave secreta para bypass"
+                    value={appwriteApiKey}
+                    onChange={(e) => setAppwriteApiKey(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-flat rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end items-center gap-3 pt-2 border-t border-ink/5">
+            {toolsSaved && (
+              <span className="text-[10px] text-success font-bold">Configurações salvas!</span>
+            )}
+            <button
+              type="submit"
+              className="px-5 py-2 bg-ink text-surface rounded-xl text-xs font-bold hover:opacity-95 transition"
+            >
+              Salvar Credenciais
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
 export default function PerfilPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -716,7 +1409,7 @@ export default function PerfilPage() {
   const setProfileData = useProfileStore((s) => s.setProfileData);
 
   const activePerfil = usePerfilStore((s) => s.perfil);
-  const [rightTab, setRightTab] = useState<"progresso" | "propositos" | "conquistas" | "cofre">("progresso");
+  const [rightTab, setRightTab] = useState<string>("progresso");
 
   const [isEditing, setIsEditing] = useState(false);
   
@@ -859,12 +1552,20 @@ export default function PerfilPage() {
     { label: "Tarefas concluídas", value: completedCount, Icon: CheckSquare },
   ];
 
-  const PROFILE_TABS = [
-    { id: "progresso", label: "Progresso" },
-    { id: "propositos", label: "Propósitos" },
-    { id: "conquistas", label: "Conquistas" },
-    { id: "cofre", label: "Cofre" },
-  ] as const;
+  const isAdmin = checkIsAdmin(user?.email);
+
+  const PROFILE_TABS = useMemo(() => {
+    const tabs = [
+      { id: "progresso", label: "Progresso" },
+      { id: "propositos", label: "Propósitos" },
+      { id: "conquistas", label: "Conquistas" },
+      { id: "cofre", label: "Cofre" },
+    ];
+    if (isAdmin) {
+      tabs.push({ id: "admin", label: "Admin" });
+    }
+    return tabs;
+  }, [isAdmin]);
 
   return (
     <AppShell>
@@ -1104,6 +1805,10 @@ export default function PerfilPage() {
               </div>
               {vaultStatus === "unlocked" ? <VaultList /> : <MasterPasswordGate />}
             </div>
+          )}
+
+          {rightTab === "admin" && (
+            <AdminProfilePanel />
           )}
 
           {/* Renderiza Meu Progresso */}

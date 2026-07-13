@@ -21,12 +21,12 @@ export function FeedRoutineWidget() {
   const completed = 0; // Placeholder
 
   return (
-    <div className="glass rounded-3xl overflow-hidden flex flex-col border border-ink/5" style={{ borderColor: "var(--flat-border)" }}>
+    <div className="glass rounded-3xl overflow-hidden flex flex-col border" style={{ borderColor: "var(--flat-border)" }}>
       {/* Header */}
       <button
         onClick={toggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-black/[0.02]"
-        style={{ borderBottom: collapsed ? "none" : "0.5px solid rgba(14,11,12,0.06)" }}
+        style={{ borderBottom: collapsed ? "none" : "1px solid var(--flat-border)" }}
       >
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl grid place-items-center shrink-0 bg-ink text-surface shadow-sm">
@@ -69,11 +69,11 @@ export function FeedRoutineWidget() {
               ) : (
                 <div className="space-y-2">
                   {blocks.slice(0, 3).map((b) => (
-                    <div key={b.id} className="p-3 bg-surface-2 rounded-2xl border border-ink/5 flex items-center justify-between">
+                    <div key={b.id} className="p-3 bg-surface-2 rounded-2xl border flex items-center justify-between" style={{ borderColor: "var(--flat-border)" }}>
                       <div className="flex items-center gap-3">
                         <div 
                           className="w-8 h-8 rounded-full flex items-center justify-center text-[14px]"
-                          style={{ backgroundColor: `${b.color}20`, color: b.color }}
+                          style={{ backgroundColor: `${b.color}20`, color: "var(--color-ink)" }}
                         >
                           {b.emoji || <Clock size={12} />}
                         </div>

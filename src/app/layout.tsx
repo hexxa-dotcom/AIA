@@ -3,7 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "AIA OS — Seu dia, organizado",
+  title: "AIA — Seu dia, organizado",
   description: "Gerenciador de tarefas com Kanban, rotina e timer.",
 };
 

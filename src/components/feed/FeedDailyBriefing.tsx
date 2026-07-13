@@ -281,13 +281,6 @@ export function FeedDailyBriefing() {
             </p>
           </div>
         </div>
-
-        {/* Right side: Date & Temp */}
-        <div className="shrink-0 ml-4 max-w-[140px] sm:max-w-none text-right flex items-center justify-end">
-          <p className="text-xs sm:text-sm text-muted">
-            Hoje é dia <strong className="text-ink capitalize font-bold">{dateFmt}</strong> e faz <strong className="text-ink font-bold">24°C</strong>
-          </p>
-        </div>
       </div>
 
       <div style={{ borderTop: "1px solid var(--flat-border)" }} />

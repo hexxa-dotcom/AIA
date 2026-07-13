@@ -29,20 +29,25 @@ export default function FeedPage() {
         </div>
       )}
 
-      {/* Grid principal: masonry (CSS columns) — equilibra a altura das colunas
-          sozinho, sem vãos, independente da altura de cada widget.
-          Ordem por prioridade: dia primeiro, depois áreas da vida. */}
-      <div className="mt-4 gap-4 lg:gap-6 columns-1 lg:columns-2 [&>*]:mb-4 lg:[&>*]:mb-6 [&>*]:break-inside-avoid">
-        {config.progress && <FeedDailyProgress />}
-        {config.routine && <FeedRoutineWidget />}
-        {config.challenges && <FeedChallengesWidget />}
-        {config.agenda && <FeedAgendaToday />}
-        {config.time && <FeedTimeWidget />}
-        {config.projects && <FeedProjectsWidget />}
-        {config.estudos && <FeedEstudosWidget />}
-        {config.finance && <FeedFinanceWidget />}
-        {config.vault && <FeedVaultWidget />}
-        {config.news && <FeedNewsWidget />}
+      {/* Grid principal: 2 colunas flex para garantir alinhamento no topo */}
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
+        {/* Coluna Esquerda */}
+        <div className="flex flex-col gap-4 lg:gap-6">
+          {config.progress && <FeedDailyProgress />}
+          {config.agenda && <FeedAgendaToday />}
+          {config.routine && <FeedRoutineWidget />}
+          {config.projects && <FeedProjectsWidget />}
+          {config.vault && <FeedVaultWidget />}
+        </div>
+        
+        {/* Coluna Direita */}
+        <div className="flex flex-col gap-4 lg:gap-6">
+          {config.finance && <FeedFinanceWidget />}
+          {config.challenges && <FeedChallengesWidget />}
+          {config.time && <FeedTimeWidget />}
+          {config.estudos && <FeedEstudosWidget />}
+          {config.news && <FeedNewsWidget />}
+        </div>
       </div>
 
       {/* Base full-width */}

@@ -4,7 +4,7 @@ import {
   Plus, ChevronLeft, ChevronRight, Inbox, Sparkles, 
   TrendingUp, TrendingDown, DollarSign, PieChart, 
   ArrowUpRight, ArrowDownRight, Trash2, LineChart, Coins,
-  Award, Wallet, Home, Users, CreditCard, AlertCircle, FileText, Check
+  Award, Wallet, Home, Users, CreditCard, AlertCircle, FileText, Check, Pencil
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
@@ -38,12 +38,13 @@ function toYearMonth(year: number, month: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
 
-type Tab = "personal" | "casa" | "familia" | "cartoes" | "dividas" | "investimentos";
+type Tab = "personal" | "casa" | "familia" | "entradas" | "cartoes" | "dividas" | "investimentos";
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: "personal", label: "Pessoal", emoji: "" },
   { id: "casa", label: "Casa", emoji: "" },
   { id: "familia", label: "Compartilhadas", emoji: "" },
+  { id: "entradas", label: "Receitas", emoji: "" },
   { id: "cartoes", label: "Cartões", emoji: "" },
   { id: "dividas", label: "Dívidas", emoji: "" },
   { id: "investimentos", label: "Investimentos", emoji: "" },
@@ -68,6 +69,11 @@ const TAB_META: Record<
     subtitle: "Família e contas divididas entre membros",
     color: "bg-sage/60 text-ink",
   },
+  entradas: {
+    title: "Entradas & Receitas",
+    subtitle: "Acompanhe seus salários, rendimentos e outras receitas",
+    color: "bg-success/20 text-success border border-success/30",
+  },
   cartoes: {
     title: "Cartões de Crédito",
     subtitle: "Fatura acumulada e limites de crédito",
@@ -89,14 +95,28 @@ const TAB_EMOJI: Record<Tab, string> = {
   personal: "",
   casa: "",
   familia: "",
+  entradas: "",
   cartoes: "",
   dividas: "",
   investimentos: "",
 };
 
-function InvestimentosTabContent() {
+function InvestimentosTabContent({
+  yearMonth,
+  onEdit,
+}: {
+  yearMonth: string;
+  onEdit: (id: string) => void;
+}) {
   const { assets, addAsset, removeAsset } = useInvestmentStore();
   const [showAdd, setShowAdd] = useState(false);
+  const allExpenses = useFinanceStore((s) => s.expenses);
+  const removeExpense = useFinanceStore((s) => s.remove);
+  const togglePaidExpense = useFinanceStore((s) => s.togglePaid);
+
+  const plannedInvestments = useMemo(() => {
+    return allExpenses.filter((e) => e.isInvestimento && isExpenseActiveInMonth(e, yearMonth));
+  }, [allExpenses, yearMonth]);
 
   // States do form
   const [name, setName] = useState("");
@@ -330,7 +350,7 @@ function InvestimentosTabContent() {
         </div>
 
         {/* Direita: Tabela de Ativos (col-span-7) */}
-        <div className="lg:col-span-7 flex flex-col gap-3">
+        <div className="lg:col-span-7 flex flex-col gap-5">
           {assets.length === 0 ? (
             <div className="glass rounded-3xl p-12 text-center text-muted border border-dashed border-flat">
               <PieChart size={32} className="mx-auto mb-3 opacity-25" />
@@ -343,7 +363,7 @@ function InvestimentosTabContent() {
                 Meus Ativos ({assets.length})
               </h3>
               
-              <div className="flex flex-col gap-2.5 max-h-[500px] overflow-y-auto pr-1">
+              <div className="flex flex-col gap-2.5 max-h-[400px] overflow-y-auto pr-1">
                 {assets.map((asset) => {
                   const totalInvestido = asset.value * asset.quantity;
                   const lucroEstimado = totalInvestido * (asset.yieldPct / 100);
@@ -385,6 +405,72 @@ function InvestimentosTabContent() {
               </div>
             </div>
           )}
+
+          {/* Investimentos Planejados (Este Mês) */}
+          <div className="glass rounded-3xl p-5 border border-flat space-y-3">
+            <h3 className="font-bold text-xs uppercase tracking-wider text-muted border-b border-flat pb-2.5">
+              Investimentos Planejados (Este Mês)
+            </h3>
+            {plannedInvestments.length === 0 ? (
+              <p className="text-xs text-muted text-center py-6">
+                Nenhum investimento planejado para este mês. Lance um no botão "Novo Lançamento" acima.
+              </p>
+            ) : (
+              <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
+                {plannedInvestments.map((e) => {
+                  const isPaid = e.payments[yearMonth] ?? false;
+                  return (
+                    <div 
+                      key={e.id}
+                      className="flex items-center justify-between p-2.5 px-3 bg-surface-2/65 hover:bg-surface-2 border border-flat rounded-2xl transition-all"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <button
+                          onClick={() => togglePaidExpense(e.id, yearMonth)}
+                          className={cn(
+                            "w-4 h-4 rounded-md border flex items-center justify-center transition-all shrink-0",
+                            isPaid ? "bg-purple-500 border-purple-500 text-white" : "border-ink/20 hover:border-ink/40 bg-white"
+                          )}
+                        >
+                          {isPaid && <Check size={10} strokeWidth={3} />}
+                        </button>
+                        <div className="flex flex-col min-w-0">
+                          <span className={cn("text-xs font-semibold text-ink truncate", isPaid && "line-through text-muted/65")}>
+                            {e.name}
+                          </span>
+                          <span className="text-[9px] text-muted font-bold uppercase mt-0.5">
+                            {e.group || "Geral"}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 shrink-0 ml-4">
+                        <span className="text-xs font-bold text-purple-500">
+                          {e.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </span>
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            onClick={() => onEdit(e.id)}
+                            className="p-1 rounded-lg text-muted hover:text-ink hover:bg-white/60 transition"
+                          >
+                            <Pencil size={11} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remover "${e.name}"?`)) removeExpense(e.id);
+                            }}
+                            className="p-1 rounded-lg text-muted hover:text-danger hover:bg-danger/10 transition"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -431,6 +517,9 @@ export default function FinancasPage() {
   const currentTabExpenses = useMemo(() => {
     return allExpenses.filter((e) => {
       if (!isExpenseActiveInMonth(e, yearMonth)) return false;
+      if (tab === "entradas") return e.isIncome;
+      // Filtra fora receitas e investimentos das abas de despesas normais
+      if (e.isIncome || e.isInvestimento) return false;
       if (tab === "personal") return e.category === "personal";
       if (tab === "casa") {
         if (imovelFilter && e.imovel !== imovelFilter && e.imovel) return false;
@@ -445,21 +534,23 @@ export default function FinancasPage() {
     });
   }, [allExpenses, tab, yearMonth, imovelFilter, memberFilter]);
 
-  // Estatísticas de pagamento para a aba ativa (apenas despesas reais)
+  // Estatísticas de pagamento para a aba ativa (apenas despesas reais ou receitas reais)
   const tabPaidStats = useMemo(() => {
-    const despesas = currentTabExpenses.filter((e) => !e.isIncome && !e.isInvestimento);
-    const total = despesas.reduce((acc, e) => acc + e.amount, 0);
-    const paid = despesas.filter((e) => e.payments[yearMonth]).reduce((acc, e) => acc + e.amount, 0);
+    const isIncome = tab === "entradas";
+    const items = currentTabExpenses.filter((e) => isIncome ? e.isIncome : (!e.isIncome && !e.isInvestimento));
+    const total = items.reduce((acc, e) => acc + e.amount, 0);
+    const paid = items.filter((e) => e.payments[yearMonth]).reduce((acc, e) => acc + e.amount, 0);
     const pct = total > 0 ? Math.round((paid / total) * 100) : 0;
     return { total, paid, pct };
-  }, [currentTabExpenses, yearMonth]);
+  }, [currentTabExpenses, yearMonth, tab]);
 
-  // Distribuição de despesas por grupo na aba ativa (apenas despesas reais)
+  // Distribuição de despesas por grupo na aba ativa (apenas despesas reais ou receitas reais)
   const tabGroupDistribution = useMemo(() => {
-    const despesas = currentTabExpenses.filter((e) => !e.isIncome && !e.isInvestimento);
-    const total = despesas.reduce((acc, e) => acc + e.amount, 0);
+    const isIncome = tab === "entradas";
+    const items = currentTabExpenses.filter((e) => isIncome ? e.isIncome : (!e.isIncome && !e.isInvestimento));
+    const total = items.reduce((acc, e) => acc + e.amount, 0);
     const groups: Record<string, number> = {};
-    despesas.forEach((e) => {
+    items.forEach((e) => {
       const groupName = e.group || "Geral";
       groups[groupName] = (groups[groupName] || 0) + e.amount;
     });
@@ -468,7 +559,7 @@ export default function FinancasPage() {
       total: val,
       pct: total > 0 ? Math.round((val / total) * 100) : 0
     })).sort((a, b) => b.total - a.total);
-  }, [currentTabExpenses]);
+  }, [currentTabExpenses, tab]);
 
   // Distribuição de gastos por cartão de crédito na aba de cartões
   const cardsDistribution = useMemo(() => {
@@ -573,14 +664,9 @@ export default function FinancasPage() {
         <div className="bg-white rounded-3xl p-5 shadow-sm">
           {/* header */}
           <div className="flex items-center gap-3 mb-5 border-b border-flat pb-3">
-            <div
-              className={`w-9 h-9 rounded-xl ${TAB_META[tab].color} grid place-items-center text-base shrink-0`}
-            >
-              {TAB_EMOJI[tab]}
-            </div>
             <div className="flex-1 text-left">
-              <div className="font-bold text-sm text-ink">{TAB_META[tab].title}</div>
-              <div className="text-[11px] text-muted">
+              <div className="font-bold text-xl text-ink">{TAB_META[tab].title}</div>
+              <div className="text-xs text-muted mt-0.5">
                 {TAB_META[tab].subtitle}
               </div>
             </div>
@@ -602,7 +688,7 @@ export default function FinancasPage() {
 
           {/* Renderização unificada no padrão de 2 colunas baseado em Investimentos */}
           {tab === "investimentos" ? (
-            <InvestimentosTabContent />
+            <InvestimentosTabContent yearMonth={yearMonth} onEdit={openEdit} />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start text-left">
               
@@ -718,9 +804,14 @@ export default function FinancasPage() {
                 {/* Resumo de Pagamentos / Orçamento para Pessoal, Casa, Compartilhadas, Dívidas */}
                 {tab !== "cartoes" && tabPaidStats.total > 0 && (
                   <div className="glass rounded-3xl p-5 border border-flat flex flex-col gap-2">
-                    <h4 className="font-bold text-[10px] uppercase tracking-wider text-muted">Progresso de Pagamentos</h4>
+                    <h4 className="font-bold text-[10px] uppercase tracking-wider text-muted">
+                      {tab === "entradas" ? "Progresso de Recebimento" : "Progresso de Pagamentos"}
+                    </h4>
                     <div className="flex justify-between items-center text-xs font-bold text-ink mt-1">
-                      <span>R$ {tabPaidStats.paid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} pagos</span>
+                      <span>
+                        R$ {tabPaidStats.paid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}{" "}
+                        {tab === "entradas" ? "recebidos" : "pagos"}
+                      </span>
                       <span className="text-muted">Total: R$ {tabPaidStats.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
                     </div>
                     <div className="h-2 w-full bg-surface-2 rounded-full overflow-hidden border border-flat mt-1">
@@ -737,7 +828,7 @@ export default function FinancasPage() {
                 {tab !== "cartoes" && tabGroupDistribution.length > 0 && (
                   <div className="glass rounded-3xl p-5 border border-flat flex flex-col gap-3">
                     <h3 className="font-bold text-xs uppercase tracking-wider text-muted flex items-center gap-1.5 border-b border-flat pb-2">
-                      <PieChart size={13} /> Distribuição de Gastos
+                      <PieChart size={13} /> {tab === "entradas" ? "Distribuição de Receitas" : "Distribuição de Gastos"}
                     </h3>
                     <div className="space-y-3.5">
                       {tabGroupDistribution.map((item) => (
@@ -762,6 +853,13 @@ export default function FinancasPage() {
 
               {/* Direita: A Listagem Principal (col-span-7) */}
               <div className="lg:col-span-7">
+                {tab === "entradas" && (
+                  <ExpenseList
+                    yearMonth={yearMonth}
+                    onEdit={openEdit}
+                    isIncomeOnly
+                  />
+                )}
                 {tab === "personal" && (
                   <ExpenseList
                     category="personal"

@@ -17,28 +17,34 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
   const [weatherTemp, setWeatherTemp] = useState<number | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     async function fetchWeather() {
       try {
         let lat = -23.55;
         let lon = -46.63;
         try {
-          const ipRes = await fetch("https://ipapi.co/json/");
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 3000);
+          const ipRes = await fetch("https://get.geojs.io/v1/ip/geo.json", { signal: controller.signal });
+          clearTimeout(id);
           const ipData = await ipRes.json();
           if (ipData.latitude && ipData.longitude) {
-            lat = ipData.latitude;
-            lon = ipData.longitude;
+            lat = Number(ipData.latitude);
+            lon = Number(ipData.longitude);
           }
         } catch (e) {}
+        
         const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
         const weatherData = await weatherRes.json();
-        if (weatherData?.current_weather?.temperature != null) {
+        if (mounted && weatherData?.current_weather?.temperature != null) {
           setWeatherTemp(Math.round(weatherData.current_weather.temperature));
         }
       } catch (e) {
-        setWeatherTemp(22);
+        if (mounted) setWeatherTemp(22);
       }
     }
     fetchWeather();
+    return () => { mounted = false; };
   }, []);
 
   const formattedDate = useMemo(() => {

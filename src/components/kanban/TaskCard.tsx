@@ -28,7 +28,7 @@ export function TaskCard({ task, onOpen }: { task: Task; onOpen: (id: string) =>
       }}
       layout
       className={cn(
-        "group relative glass rounded-2xl p-3 cursor-pointer select-none transition hover:shadow-lg",
+        "group relative glass task-card rounded-2xl p-3 cursor-pointer select-none transition",
         isDragging && "dragging",
         task.column === "done" && "opacity-60",
       )}
@@ -108,6 +108,18 @@ export function TaskCard({ task, onOpen }: { task: Task; onOpen: (id: string) =>
               #{tag}
             </span>
           ))}
+          {task.clientType === "pessoal" && (
+            <span className="text-[10px] flex items-center gap-1 bg-info/15 text-info px-2 py-0.5 rounded-full font-semibold">
+              <UserCheck size={10} />
+              Pessoal
+            </span>
+          )}
+          {task.clientType === "cliente" && (
+            <span className="text-[10px] flex items-center gap-1 bg-lime/15 text-lime px-2 py-0.5 rounded-full font-semibold">
+              <UserCheck size={10} />
+              {task.clientName || "Cliente"}
+            </span>
+          )}
           {task.recurrence && (
             <span
               className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full"

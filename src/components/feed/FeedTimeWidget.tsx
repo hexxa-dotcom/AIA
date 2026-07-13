@@ -93,7 +93,7 @@ export function FeedTimeWidget() {
       <button
         onClick={toggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-black/[0.02]"
-        style={{ borderBottom: collapsed ? "none" : "0.5px solid rgba(14,11,12,0.06)" }}
+        style={{ borderBottom: collapsed ? "none" : "1px solid var(--flat-border)" }}
       >
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl grid place-items-center shrink-0 bg-ink text-surface">

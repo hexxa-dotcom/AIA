@@ -63,7 +63,12 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
     if (isRemoteSyncEnabled()) initAuth();
   }, [initAuth]);
 
-  // Auth guard desativado temporariamente
+  // Redireciona para o login se não estiver autenticado e o banco de dados remoto estiver configurado
+  useEffect(() => {
+    if (isRemoteSyncEnabled() && authChecked && !user) {
+      router.push("/login");
+    }
+  }, [authChecked, user, router, authChecked]);
 
   // Quando offline (localStorage), faz seed local
   useEffect(() => {
@@ -120,7 +125,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 350, damping: 35 }}
+            transition={{ duration: 0.15, ease: "easeInOut" }}
             className="flex-1 flex flex-col gap-3"
           >
             {children}

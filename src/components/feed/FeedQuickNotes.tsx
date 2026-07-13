@@ -35,7 +35,7 @@ export function FeedQuickNotes() {
   }
 
   return (
-    <div className="bg-white rounded-3xl p-5 shadow-sm border border-flat-border">
+    <div className="bg-white rounded-3xl p-5 shadow-sm border" style={{ borderColor: "var(--flat-border)" }}>
       {/* Header colapsável */}
       <div className="flex items-center justify-between mb-4">
         <button

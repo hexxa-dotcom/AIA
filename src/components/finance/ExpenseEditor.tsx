@@ -35,6 +35,26 @@ const GROUPS: Record<ExpenseCategory, string[]> = {
   familia: ["Alimentação", "Escola", "Saúde", "Lazer", "Outros"],
 };
 
+const INCOMING_GROUPS = [
+  "Salário",
+  "Dividendos / Proventos",
+  "Pix / Transferência",
+  "Reembolso",
+  "Venda",
+  "Prestação de Serviços",
+  "Outros",
+];
+
+const INVESTMENT_GROUPS = [
+  "Ações",
+  "Renda Fixa",
+  "FIIs (Fundos Imobiliários)",
+  "Cripto",
+  "Tesouro Direto",
+  "Previdência Privada",
+  "Outros",
+];
+
 const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   personal: "Pessoal",
   casa: "Casa",
@@ -42,15 +62,15 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
 };
 
 const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
-  personal: "",
-  casa: "",
-  familia: "",
+  personal: "👤",
+  casa: "🏠",
+  familia: "👥",
 };
 
 const LBL =
   "block text-[10px] uppercase tracking-widest font-semibold text-muted mb-2";
 const INP =
-  "block w-full px-4 py-3 rounded-2xl bg-surface-2 text-sm outline-none focus:ring-2 focus:ring-ink/15";
+  "block w-full px-4 py-3 rounded-2xl bg-surface-2 text-sm outline-none focus:ring-2 focus:ring-ink/15 text-ink";
 
 export function ExpenseEditor({
   id,
@@ -82,6 +102,7 @@ export function ExpenseEditor({
   );
   const [group, setGroup] = useState(existing?.group ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
+  const [formaPagamento, setFormaPagamento] = useState<"Dinheiro" | "Pix" | "Débito Automático" | "Cartão de Crédito" | "">(existing?.formaPagamento ?? "");
   const [isActive, setIsActive] = useState(existing?.isActive ?? true);
   const [tipo, setTipo] = useState<ExpenseTipo>(existing?.tipo ?? "recorrente");
   const [totalParcelas, setTotalParcelas] = useState(
@@ -90,7 +111,6 @@ export function ExpenseEditor({
   const [parcelaInicio, setParcelaInicio] = useState(
     existing?.parcelaInicio ?? new Date().toISOString().slice(0, 7),
   );
-  const [isCartao, setIsCartao] = useState(existing?.isCartao ?? false);
   const [cartaoNome, setCartaoNome] = useState(existing?.cartaoNome ?? "");
   const [imovel, setImovel] = useState(existing?.imovel ?? "");
   const [familyMember, setFamilyMember] = useState(
@@ -111,8 +131,18 @@ export function ExpenseEditor({
   const groups = GROUPS[category];
 
   useEffect(() => {
-    if (!group || !groups.includes(group)) setGroup(groups[0]);
-  }, [category]);
+    if (tipoLancamento === "receita") {
+      if (!INCOMING_GROUPS.includes(group)) {
+        setGroup(INCOMING_GROUPS[0]);
+      }
+    } else if (tipoLancamento === "investimento") {
+      if (!INVESTMENT_GROUPS.includes(group)) {
+        setGroup(INVESTMENT_GROUPS[0]);
+      }
+    } else {
+      if (!group || !groups.includes(group)) setGroup(groups[0]);
+    }
+  }, [tipoLancamento, category]);
 
   useEffect(() => {
     if (category === "casa" && !imovel && properties.length > 0) {
@@ -176,29 +206,31 @@ export function ExpenseEditor({
       name: name.trim(),
       amount: parsed,
       dueDay: Math.min(31, Math.max(1, parseInt(dueDay) || 1)),
-      category,
-      group: group || groups[0],
+      category: tipoLancamento === "despesa" ? category : "personal",
+      group: tipoLancamento === "despesa"
+        ? (group || groups[0])
+        : (group || (tipoLancamento === "receita" ? INCOMING_GROUPS[0] : INVESTMENT_GROUPS[0])),
       notes: notes.trim() || undefined,
       isActive,
       tipo,
       totalParcelas: tipo === "parcela" ? parseInt(totalParcelas) : undefined,
       parcelaInicio:
         tipo === "parcela" || tipo === "unico" ? parcelaInicio : undefined,
-      isCartao,
-      cartaoNome: isCartao ? cartaoNome.trim() || undefined : undefined,
+      isCartao: tipoLancamento === "despesa" ? formaPagamento === "Cartão de Crédito" : false,
+      cartaoNome: tipoLancamento === "despesa" && formaPagamento === "Cartão de Crédito" ? cartaoNome.trim() || undefined : undefined,
       isIncome: tipoLancamento === "receita",
       isInvestimento: tipoLancamento === "investimento",
-      imovel: category === "casa" && imovel ? imovel : undefined,
-      familyMember:
-        category === "familia" && familyMember ? familyMember : undefined,
-      sharedWith: shareEmails.length > 0 ? shareEmails : undefined,
+      imovel: tipoLancamento === "despesa" && category === "casa" && imovel ? imovel : undefined,
+      familyMember: tipoLancamento === "despesa" && category === "familia" && familyMember ? familyMember : undefined,
+      sharedWith: tipoLancamento === "despesa" && shareEmails.length > 0 ? shareEmails : undefined,
+      formaPagamento: (formaPagamento as "Dinheiro" | "Pix" | "Débito Automático" | "Cartão de Crédito") || undefined,
     };
 
     if (id) {
       update(id, payload);
     } else {
       add(payload);
-      if (shareEmails.length > 0 && user?.email) {
+      if (tipoLancamento === "despesa" && shareEmails.length > 0 && user?.email) {
         const inviteData = {
           name: payload.name,
           amount: payload.amount,
@@ -216,9 +248,15 @@ export function ExpenseEditor({
           familyMember: payload.familyMember,
           isIncome: payload.isIncome,
           isInvestimento: payload.isInvestimento,
+          formaPagamento: payload.formaPagamento,
         };
         shareEmails.forEach((toEmail) => {
-          sendInvite({ fromEmail: user.email, toEmail, expense: inviteData });
+          sendInvite({
+            fromEmail: user.email!,
+            fromName: user.email!.split("@")[0],
+            toEmail,
+            expense: inviteData,
+          });
         });
       }
     }
@@ -226,26 +264,16 @@ export function ExpenseEditor({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end"
-      style={{
-        background: "rgba(14,11,12,0.40)",
-        backdropFilter: "blur(4px)",
-        WebkitBackdropFilter: "blur(4px)",
-      }}
-    >
-      <motion.div 
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex justify-end">
+      {/* Click outside to close */}
+      <div className="absolute inset-0" onClick={onClose} />
+
+      <motion.div
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
-        transition={{ type: "tween", ease: [0.16, 1, 0.3, 1], duration: 0.45 }}
-        className="w-full sm:w-[440px] h-full sm:rounded-l-[32px] shadow-[0_0_40px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden"
-        style={{
-          background: "rgba(255, 255, 255, 0.45)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          borderLeft: "1px solid rgba(255,255,255,0.4)"
-        }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="relative w-full max-w-md bg-surface h-full shadow-2xl flex flex-col z-10"
       >
         {/* mobile drag handle */}
         <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
@@ -254,12 +282,12 @@ export function ExpenseEditor({
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-ink/5 shrink-0">
-          <h2 className="font-bold text-lg">
+          <h2 className="font-bold text-lg text-ink">
             {id ? "Editar Lançamento" : "Novo Lançamento"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-surface-2 transition"
+            className="p-2 rounded-xl hover:bg-surface-2 transition text-ink"
           >
             <X size={16} />
           </button>
@@ -283,36 +311,39 @@ export function ExpenseEditor({
                       : "text-muted hover:text-ink hover:bg-black/5"
                   )}
                 >
-                  {t === "receita" ? "Entrada" : t}
+                  {t === "receita" ? "Entrada" : t === "despesa" ? "Despesa" : "Investimento"}
                 </button>
               ))}
             </div>
           </div>
-          {/* Categoria */}
-          <div>
-            <span className={LBL}>Categoria</span>
-            <div className="grid grid-cols-3 gap-2">
-              {(["personal", "casa", "familia"] as ExpenseCategory[]).map(
-                (c) => (
-                  <button
-                    key={c}
-                    onClick={() => setCategory(c)}
-                    className={`flex flex-col items-center gap-1 py-3 rounded-2xl text-sm font-semibold transition ${
-                      category === c
-                        ? "bg-ink text-lime"
-                        : "bg-surface-2 text-ink hover:bg-ink/10"
-                    }`}
-                  >
-                    <span className="text-base">{CATEGORY_ICONS[c]}</span>
-                    {CATEGORY_LABELS[c]}
-                  </button>
-                ),
-              )}
-            </div>
-          </div>
 
-          {/* Imóvel (casa only) */}
-          {category === "casa" && (
+          {/* Categoria (Apenas para Despesas) */}
+          {tipoLancamento === "despesa" && (
+            <div>
+              <span className={LBL}>Categoria</span>
+              <div className="grid grid-cols-3 gap-2">
+                {(["personal", "casa", "familia"] as ExpenseCategory[]).map(
+                  (c) => (
+                    <button
+                      key={c}
+                      onClick={() => setCategory(c)}
+                      className={`flex flex-col items-center gap-1 py-3 rounded-2xl text-xs font-bold transition border border-flat ${
+                        category === c
+                          ? "bg-ink text-lime"
+                          : "bg-surface-2 text-ink hover:bg-ink/10"
+                      }`}
+                    >
+                      <span className="text-sm">{CATEGORY_ICONS[c]}</span>
+                      {CATEGORY_LABELS[c]}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Imóvel (Apenas despesa e casa) */}
+          {tipoLancamento === "despesa" && category === "casa" && (
             <div>
               <span className={LBL}>Imóvel</span>
               {!addingImovel ? (
@@ -320,7 +351,7 @@ export function ExpenseEditor({
                   <select
                     value={imovel}
                     onChange={(e) => setImovel(e.target.value)}
-                    className={INP + "flex-1"}
+                    className={INP + " flex-1"}
                   >
                     {properties.map((p) => (
                       <option key={p} value={p}>
@@ -331,7 +362,7 @@ export function ExpenseEditor({
                   <button
                     type="button"
                     onClick={() => setAddingImovel(true)}
-                    className="px-3 py-2.5 rounded-2xl bg-surface-2 hover:bg-ink/10 transition text-sm font-semibold flex items-center gap-1 shrink-0"
+                    className="px-3 py-2.5 rounded-2xl bg-surface-2 hover:bg-ink/10 transition text-sm font-semibold flex items-center gap-1 shrink-0 text-ink border border-flat"
                   >
                     <Plus size={13} /> Novo
                   </button>
@@ -347,7 +378,7 @@ export function ExpenseEditor({
                       if (e.key === "Escape") setAddingImovel(false);
                     }}
                     placeholder="ex: Apartamento, Sítio…"
-                    className={INP + "flex-1"}
+                    className={INP + " flex-1"}
                   />
                   <button
                     type="button"
@@ -359,7 +390,7 @@ export function ExpenseEditor({
                   <button
                     type="button"
                     onClick={() => setAddingImovel(false)}
-                    className="px-3 py-2.5 rounded-2xl bg-surface-2 hover:bg-ink/10 transition shrink-0"
+                    className="px-3 py-2.5 rounded-2xl bg-surface-2 hover:bg-ink/10 transition shrink-0 text-ink"
                   >
                     <X size={14} />
                   </button>
@@ -368,8 +399,8 @@ export function ExpenseEditor({
             </div>
           )}
 
-          {/* Membro da família (familia only) */}
-          {category === "familia" && (
+          {/* Membro da família (Apenas despesa e compartilhada) */}
+          {tipoLancamento === "despesa" && category === "familia" && (
             <div>
               <span className={LBL}>Membro</span>
               {!addingMember ? (
@@ -377,7 +408,7 @@ export function ExpenseEditor({
                   <select
                     value={familyMember}
                     onChange={(e) => setFamilyMember(e.target.value)}
-                    className={INP + "flex-1"}
+                    className={INP + " flex-1"}
                   >
                     <option value="">Sem membro específico</option>
                     {familyMembers.map((m) => (
@@ -389,7 +420,7 @@ export function ExpenseEditor({
                   <button
                     type="button"
                     onClick={() => setAddingMember(true)}
-                    className="px-3 py-2.5 rounded-2xl bg-surface-2 hover:bg-ink/10 transition text-sm font-semibold flex items-center gap-1 shrink-0"
+                    className="px-3 py-2.5 rounded-2xl bg-surface-2 hover:bg-ink/10 transition text-sm font-semibold flex items-center gap-1 shrink-0 text-ink border border-flat"
                   >
                     <Plus size={13} /> Novo
                   </button>
@@ -405,7 +436,7 @@ export function ExpenseEditor({
                       if (e.key === "Escape") setAddingMember(false);
                     }}
                     placeholder="ex: Esposa, Filho, Maria…"
-                    className={INP + "flex-1"}
+                    className={INP + " flex-1"}
                   />
                   <button
                     type="button"
@@ -417,7 +448,7 @@ export function ExpenseEditor({
                   <button
                     type="button"
                     onClick={() => setAddingMember(false)}
-                    className="px-3 py-2.5 rounded-2xl bg-surface-2 hover:bg-ink/10 transition shrink-0"
+                    className="px-3 py-2.5 rounded-2xl bg-surface-2 hover:bg-ink/10 transition shrink-0 text-ink"
                   >
                     <X size={14} />
                   </button>
@@ -428,11 +459,23 @@ export function ExpenseEditor({
 
           {/* Nome */}
           <div>
-            <span className={LBL}>Nome da despesa</span>
+            <span className={LBL}>
+              {tipoLancamento === "despesa" 
+                ? "Nome da despesa" 
+                : tipoLancamento === "receita" 
+                  ? "Nome da entrada (Origem)" 
+                  : "Nome do ativo / investimento"}
+            </span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="ex: Netflix, Aluguel, IPTU…"
+              placeholder={
+                tipoLancamento === "despesa"
+                  ? "ex: Netflix, Aluguel, IPTU…"
+                  : tipoLancamento === "receita"
+                    ? "ex: Salário, Freelance, Dividendos…"
+                    : "ex: Aporte Tesouro, Compra de FIIs…"
+              }
               className={INP}
             />
           </div>
@@ -448,11 +491,17 @@ export function ExpenseEditor({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0,00"
-                className={INP + "font-mono"}
+                className={INP + " font-mono"}
               />
             </div>
             <div>
-              <span className={LBL}>Dia de venc.</span>
+              <span className={LBL}>
+                {tipoLancamento === "despesa" 
+                  ? "Dia de venc." 
+                  : tipoLancamento === "receita" 
+                    ? "Dia de recebimento" 
+                    : "Dia do aporte"}
+              </span>
               <input
                 type="number"
                 min="1"
@@ -460,14 +509,20 @@ export function ExpenseEditor({
                 value={dueDay}
                 onChange={(e) => setDueDay(e.target.value)}
                 placeholder="ex: 10"
-                className={INP + "font-mono"}
+                className={INP + " font-mono"}
               />
             </div>
           </div>
 
-          {/* Tipo */}
+          {/* Tipo de cobrança/recebimento */}
           <div>
-            <span className={LBL}>Tipo de cobrança</span>
+            <span className={LBL}>
+              {tipoLancamento === "despesa" 
+                ? "Tipo de cobrança" 
+                : tipoLancamento === "receita" 
+                  ? "Tipo de recebimento" 
+                  : "Tipo de aporte"}
+            </span>
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
@@ -483,13 +538,13 @@ export function ExpenseEditor({
                 <button
                   key={tid}
                   onClick={() => setTipo(tid)}
-                  className={`flex flex-col items-center gap-1 py-3 rounded-2xl text-xs font-semibold transition ${
+                  className={`flex flex-col items-center gap-1 py-3 rounded-2xl text-[10px] font-bold transition border border-flat ${
                     tipo === tid
                       ? "bg-ink text-lime"
                       : "bg-surface-2 text-ink hover:bg-ink/10"
                   }`}
                 >
-                  <Icon size={14} />
+                  <Icon size={13} />
                   {label}
                 </button>
               ))}
@@ -507,7 +562,7 @@ export function ExpenseEditor({
                   value={totalParcelas}
                   onChange={(e) => setTotalParcelas(e.target.value)}
                   placeholder="ex: 12"
-                  className={INP + "font-mono"}
+                  className={INP + " font-mono"}
                 />
               </div>
               <div>
@@ -522,9 +577,10 @@ export function ExpenseEditor({
             </div>
           )}
 
+          {/* Mês Único */}
           {tipo === "unico" && (
             <div>
-              <span className={LBL}>Mês do pagamento</span>
+              <span className={LBL}>Mês do pagamento / lançamento</span>
               <input
                 type="month"
                 value={parcelaInicio}
@@ -534,15 +590,31 @@ export function ExpenseEditor({
             </div>
           )}
 
-          {/* Grupo */}
+          {/* Subcategoria / Grupo (Condicional ao Tipo de Lançamento) */}
           <div>
-            <span className={LBL}>Grupo</span>
+            <span className={LBL}>
+              {tipoLancamento === "despesa" 
+                ? "Grupo / Subcategoria" 
+                : tipoLancamento === "receita" 
+                  ? "Categoria da Entrada" 
+                  : "Tipo de Investimento"}
+            </span>
             <select
               value={group}
               onChange={(e) => setGroup(e.target.value)}
               className={INP}
             >
-              {groups.map((g) => (
+              {tipoLancamento === "despesa" && groups.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+              {tipoLancamento === "receita" && INCOMING_GROUPS.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+              {tipoLancamento === "investimento" && INVESTMENT_GROUPS.map((g) => (
                 <option key={g} value={g}>
                   {g}
                 </option>
@@ -550,27 +622,43 @@ export function ExpenseEditor({
             </select>
           </div>
 
-          {/* Cartão */}
-          <div className="rounded-2xl border border-ink/10 p-4 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isCartao}
-                onChange={(e) => setIsCartao(e.target.checked)}
-                className="w-4 h-4 accent-lime shrink-0"
-              />
-              <CreditCard size={14} className="shrink-0 text-muted" />
-              <span className="text-sm font-semibold">Cobrado no cartão</span>
-            </label>
-            {isCartao && (
+          {/* Forma de Pagamento */}
+          <div>
+            <span className={LBL}>
+              {tipoLancamento === "despesa" 
+                ? "Forma de Pagamento" 
+                : tipoLancamento === "receita" 
+                  ? "Forma de Recebimento" 
+                  : "Forma de Aporte"}
+            </span>
+            <select
+              value={formaPagamento}
+              onChange={(e) => {
+                const val = e.target.value as any;
+                setFormaPagamento(val);
+              }}
+              className={INP}
+            >
+              <option value="">Selecione...</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Pix">Pix</option>
+              <option value="Débito Automático">Débito Automático</option>
+              <option value="Cartão de Crédito">Cartão de Crédito</option>
+            </select>
+          </div>
+
+          {/* Cartão Nome (Apenas Despesas c/ Cartão de Crédito) */}
+          {tipoLancamento === "despesa" && formaPagamento === "Cartão de Crédito" && (
+            <div>
+              <span className={LBL}>Qual Cartão? (Opcional)</span>
               <input
                 value={cartaoNome}
                 onChange={(e) => setCartaoNome(e.target.value)}
                 placeholder="Nome do cartão (ex: Nubank, Inter…)"
                 className={INP}
               />
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Observações */}
           <div>
@@ -578,110 +666,112 @@ export function ExpenseEditor({
             <input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="ex: débito automático, vence após fds…"
+              placeholder="ex: rendimento da poupança, venc. após fds…"
               className={INP}
             />
           </div>
 
-          {/* Compartilhar */}
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{
-              border: shareSection
-                ? "1px solid rgba(0,0,0,0.14)"
-                : "1px solid rgba(0,0,0,0.08)",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setShareSection((v) => !v)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition hover:bg-surface-2"
+          {/* Compartilhar (Apenas Despesas) */}
+          {tipoLancamento === "despesa" && (
+            <div
+              className="rounded-2xl overflow-hidden bg-surface-2/30"
+              style={{
+                border: shareSection
+                  ? "1px solid rgba(0,0,0,0.14)"
+                  : "1px solid var(--flat-border)",
+              }}
             >
-              <div
-                className={`w-8 h-8 rounded-xl grid place-items-center shrink-0 transition-colors ${
-                  shareSection ? "bg-ink" : "bg-surface-2"
-                }`}
+              <button
+                type="button"
+                onClick={() => setShareSection((v) => !v)}
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition hover:bg-surface-2"
               >
-                <Share2
-                  size={14}
-                  className={shareSection ? "text-lime" : "text-muted"}
-                />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold">Compartilhar despesa</p>
-                <p className="text-[11px] text-muted">
-                  {shareEmails.length > 0
-                    ? `${shareEmails.length} pessoa${shareEmails.length > 1 ? "s" : ""} adicionada${shareEmails.length > 1 ? "s" : ""}`
-                    : "Enviar para outros usuários AIA OS"}
-                </p>
-              </div>
-              {shareEmails.length > 0 && (
-                <span className="w-5 h-5 rounded-full bg-ink text-lime text-[10px] font-bold grid place-items-center">
-                  {shareEmails.length}
-                </span>
-              )}
-            </button>
-
-            {shareSection && (
-              <div className="px-4 pb-4 space-y-3 border-t border-ink/5">
-                <p className="text-[11px] text-muted pt-3">
-                  A despesa aparecerá na caixa de entrada do usuário. Após
-                  aceitar, será adicionada automaticamente às finanças na
-                  categoria <strong>{CATEGORY_LABELS[category]}</strong>.
-                </p>
-
-                {shareEmails.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {shareEmails.map((em) => (
-                      <span
-                        key={em}
-                        className="flex items-center gap-1.5 bg-ink text-lime text-[11px] font-medium px-2.5 py-1 rounded-full"
-                      >
-                        <UserPlus size={10} />
-                        {em}
-                        <button
-                          type="button"
-                          onClick={() => removeEmail(em)}
-                          className="ml-0.5 opacity-60 hover:opacity-100"
-                        >
-                          <X size={10} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    value={emailInput}
-                    onChange={(e) => {
-                      setEmailInput(e.target.value);
-                      setError("");
-                    }}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), addEmail())
-                    }
-                    placeholder="email@exemplo.com"
-                    className="flex-1 px-3 py-2.5 rounded-xl bg-surface-2 text-sm outline-none focus:ring-2 focus:ring-ink/15"
+                <div
+                  className={`w-8 h-8 rounded-xl grid place-items-center shrink-0 transition-colors ${
+                    shareSection ? "bg-ink" : "bg-surface-2"
+                  }`}
+                >
+                  <Share2
+                    size={14}
+                    className={shareSection ? "text-lime" : "text-muted"}
                   />
-                  <button
-                    type="button"
-                    onClick={addEmail}
-                    className="px-3 py-2.5 rounded-xl bg-ink text-lime hover:opacity-90 transition"
-                  >
-                    <Plus size={15} />
-                  </button>
                 </div>
-
-                {error && (
-                  <p className="flex items-center gap-1.5 text-[11px] text-danger">
-                    <AlertCircle size={11} /> {error}
+                <div className="flex-1 text-ink">
+                  <p className="text-sm font-semibold">Compartilhar despesa</p>
+                  <p className="text-[11px] text-muted">
+                    {shareEmails.length > 0
+                      ? `${shareEmails.length} pessoa${shareEmails.length > 1 ? "s" : ""} adicionada${shareEmails.length > 1 ? "s" : ""}`
+                      : "Enviar para outros usuários AIA OS"}
                   </p>
+                </div>
+                {shareEmails.length > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-ink text-lime text-[10px] font-bold grid place-items-center">
+                    {shareEmails.length}
+                  </span>
                 )}
-              </div>
-            )}
-          </div>
+              </button>
+
+              {shareSection && (
+                <div className="px-4 pb-4 space-y-3 border-t border-ink/5 text-ink">
+                  <p className="text-[11px] text-muted pt-3">
+                    A despesa aparecerá na caixa de entrada do usuário. Após
+                    aceitar, será adicionada automaticamente às finanças na
+                    categoria <strong>{CATEGORY_LABELS[category]}</strong>.
+                  </p>
+
+                  {shareEmails.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {shareEmails.map((em) => (
+                        <span
+                          key={em}
+                          className="flex items-center gap-1.5 bg-ink text-lime text-[11px] font-medium px-2.5 py-1 rounded-full"
+                        >
+                          <UserPlus size={10} />
+                          {em}
+                          <button
+                            type="button"
+                            onClick={() => removeEmail(em)}
+                            className="ml-0.5 opacity-60 hover:opacity-100"
+                          >
+                            <X size={10} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => {
+                        setEmailInput(e.target.value);
+                        setError("");
+                      }}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && (e.preventDefault(), addEmail())
+                      }
+                      placeholder="email@exemplo.com"
+                      className="flex-1 px-3 py-2.5 rounded-xl bg-surface-2 text-sm outline-none focus:ring-2 focus:ring-ink/15 text-ink border border-flat"
+                    />
+                    <button
+                      type="button"
+                      onClick={addEmail}
+                      className="px-3 py-2.5 rounded-xl bg-ink text-lime hover:opacity-90 transition"
+                    >
+                      <Plus size={15} />
+                    </button>
+                  </div>
+
+                  {error && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-danger">
+                      <AlertCircle size={11} /> {error}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {id && (
             <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -691,7 +781,7 @@ export function ExpenseEditor({
                 onChange={(e) => setIsActive(e.target.checked)}
                 className="w-4 h-4 accent-lime"
               />
-              <span className="text-sm font-medium">Despesa ativa</span>
+              <span className="text-sm font-medium text-ink">Lançamento ativo</span>
             </label>
           )}
 
@@ -703,7 +793,7 @@ export function ExpenseEditor({
         </div>
 
         {/* footer */}
-        <div className="flex gap-3 px-5 py-4 border-t border-ink/5 shrink-0">
+        <div className="flex gap-3 px-5 py-4 border-t border-ink/5 shrink-0 bg-surface-2/20">
           <Button
             variant="ghost"
             size="md"
@@ -713,7 +803,7 @@ export function ExpenseEditor({
             Cancelar
           </Button>
           <Button size="md" onClick={save} className="flex-1">
-            {shareEmails.length > 0 && !id
+            {tipoLancamento === "despesa" && shareEmails.length > 0 && !id
               ? `Adicionar e compartilhar`
               : id
                 ? "Salvar"

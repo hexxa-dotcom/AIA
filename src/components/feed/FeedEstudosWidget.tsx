@@ -15,12 +15,12 @@ export function FeedEstudosWidget() {
   if (flashcards === 0 && courseProgress === 0) return null;
 
   return (
-    <div className="glass rounded-3xl overflow-hidden">
+    <div className="glass rounded-3xl overflow-hidden flex flex-col border" style={{ borderColor: "var(--flat-border)" }}>
       {/* Header */}
       <button
         onClick={toggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-black/[0.02]"
-        style={{ borderBottom: collapsed ? "none" : "0.5px solid rgba(14,11,12,0.06)" }}
+        style={{ borderBottom: collapsed ? "none" : "1px solid var(--flat-border)" }}
       >
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl grid place-items-center shrink-0"
@@ -68,7 +68,7 @@ export function FeedEstudosWidget() {
               {/* Summary chips */}
               <div className="flex gap-2">
                 <div className="flex-1 rounded-2xl px-3 py-2.5 flex flex-col gap-0.5"
-                  style={{ background: "rgba(59,130,246,0.07)", border: "0.5px solid rgba(59,130,246,0.18)" }}>
+                  style={{ background: "rgba(59,130,246,0.07)", border: "1px solid var(--flat-border)" }}>
                   <div className="flex items-center gap-1.5">
                     <BrainCircuit size={11} style={{ color: "var(--color-info)" }} />
                     <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-info)" }}>

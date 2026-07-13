@@ -17,12 +17,12 @@ export function FeedChallengesWidget() {
   const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="glass rounded-3xl overflow-hidden flex flex-col border border-ink/5" style={{ borderColor: "var(--flat-border)" }}>
+    <div className="glass rounded-3xl overflow-hidden flex flex-col border" style={{ borderColor: "var(--flat-border)" }}>
       {/* Header */}
       <button
         onClick={toggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-black/[0.02]"
-        style={{ borderBottom: collapsed ? "none" : "0.5px solid rgba(14,11,12,0.06)" }}
+        style={{ borderBottom: collapsed ? "none" : "1px solid var(--flat-border)" }}
       >
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl grid place-items-center shrink-0 bg-ink text-surface shadow-sm">
@@ -63,7 +63,8 @@ export function FeedChallengesWidget() {
                 return (
                   <div 
                     key={p.id}
-                    className="p-3.5 bg-surface-2 border border-ink/5 rounded-2xl flex flex-col gap-2 text-left"
+                    className="p-3.5 bg-surface-2 border rounded-2xl flex flex-col gap-2 text-left"
+                    style={{ borderColor: "var(--flat-border)" }}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-bold text-xs text-ink leading-tight truncate">{p.name}</span>

@@ -22,21 +22,24 @@ const CATS = [
     label: "Pessoal",
     emoji: "",
     color: "var(--color-info)",
-    bg: "color-mix(in srgb, var(--color-info) 8%, transparent)",
+    bg: "color-mix(in srgb, var(--color-info) 12%, transparent)",
+    border: "1px solid color-mix(in srgb, var(--color-info) 20%, transparent)",
   },
   {
     key: "casa" as const,
     label: "Casa",
     emoji: "",
     color: "var(--color-success)",
-    bg: "color-mix(in srgb, var(--color-success) 8%, transparent)",
+    bg: "color-mix(in srgb, var(--color-success) 12%, transparent)",
+    border: "1px solid color-mix(in srgb, var(--color-success) 20%, transparent)",
   },
   {
     key: "familia" as const,
     label: "Compartilhadas",
     emoji: "",
     color: "var(--color-warning)",
-    bg: "color-mix(in srgb, var(--color-warning) 8%, transparent)",
+    bg: "color-mix(in srgb, var(--color-warning) 12%, transparent)",
+    border: "1px solid color-mix(in srgb, var(--color-warning) 20%, transparent)",
   },
 ] as const;
 
@@ -112,7 +115,7 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
   return (
     <div className="space-y-4">
       {/* ── CARD UNIFICADO: TOTAL DO MÊS E INSIGHTS (PRETO PREMIUM) ── */}
-      <div className="bg-ink rounded-3xl p-5 shadow-sm text-white border border-white/10 relative overflow-hidden">
+      <div className="bg-[#141414] rounded-3xl p-5 shadow-sm text-white border border-white/10 relative overflow-hidden">
         {/* Glow decorativo de fundo */}
         <div className="absolute -right-10 -top-10 w-40 h-40 bg-success/10 rounded-full blur-3xl pointer-events-none" />
         
@@ -153,11 +156,11 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5">
                 <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Pago</p>
-                <p className="text-sm font-extrabold text-success mt-0.5">{fmtShort(paid)}</p>
+                <p className="text-sm font-extrabold text-white mt-0.5">{fmtShort(paid)}</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5">
                 <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Pendente</p>
-                <p className="text-sm font-extrabold text-warning mt-0.5">{fmtShort(pending)}</p>
+                <p className="text-sm font-extrabold text-white mt-0.5">{fmtShort(pending)}</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5">
                 <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Itens</p>
@@ -185,11 +188,11 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
                 </div>
                 <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
                   <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Entradas (Mês)</p>
-                  <p className="text-sm font-bold text-success mt-0.5">{fmtShort(totalReceitas)}</p>
+                  <p className="text-sm font-bold text-white mt-0.5">{fmtShort(totalReceitas)}</p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
                   <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Investido (Mês)</p>
-                  <p className="text-sm font-bold text-purple-400 mt-0.5">{fmtShort(totalInvestimentos)}</p>
+                  <p className="text-sm font-bold text-white mt-0.5">{fmtShort(totalInvestimentos)}</p>
                 </div>
               </div>
             </div>
@@ -231,14 +234,14 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
 
           {/* Category tiles */}
           <div className="grid grid-cols-3 gap-2">
-            {CATS.map(({ key, label, color, bg }) => {
+            {CATS.map(({ key, label, color, bg, border }) => {
               const val = catTotals[key];
               const pct = total > 0 ? Math.round((val / total) * 100) : 0;
               return (
                 <div
                   key={key}
                   className="rounded-2xl p-3 relative"
-                  style={{ background: bg }}
+                  style={{ background: bg, border }}
                 >
                   <p
                     className="text-[13px] font-bold leading-tight truncate"

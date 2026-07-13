@@ -8,7 +8,7 @@ import {
   Plug, Copy, Check, Plus, X, RefreshCw,
   Database, Download, Settings2, ChevronLeft,
   Wifi, ExternalLink, Shield, KeyRound, Eye, EyeOff, 
-  Palette, Sun, Moon, Contrast, Bot, LayoutGrid
+  Palette, Sun, Moon, Contrast, Bot, LayoutGrid, Newspaper
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAiStore } from "@/store/useAiStore";
@@ -27,8 +27,11 @@ import { useTimerStore } from "@/store/useTimerStore";
 import { usePerfilStore } from "@/store/usePerfilStore";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useFeedConfigStore } from "@/store/useFeedConfigStore";
+import { useNewsStore } from "@/store/useNewsStore";
 import { isSupabaseEnabled } from "@/lib/supabase";
-import { isAppwriteEnabled } from "@/lib/appwrite";
+import { isAppwriteEnabled, getAppwrite } from "@/lib/appwrite";
+import { ID } from "appwrite";
+import { useAdminStore, checkIsAdmin } from "@/store/useAdminStore";
 import { cn } from "@/lib/utils";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -373,34 +376,24 @@ function ResendKeyField() {
 }
 
 function IntegrationsPanel() {
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = checkIsAdmin(user?.email);
+  const { settings } = useAdminStore();
+
   const supabaseActive = isSupabaseEnabled();
-  const appwriteActive = isAppwriteEnabled();
+
+  if (!isAdmin && !settings.allowGuestsConfigureIntegrations) {
+    return (
+      <div className="glass rounded-3xl p-8 text-center text-muted border border-flat flex flex-col items-center">
+        <Shield size={24} className="mb-2 opacity-50" />
+        <p className="font-bold text-xs text-ink uppercase tracking-wider">Acesso Restrito</p>
+        <p className="text-[10px] text-muted mt-1 max-w-[280px]">Configurações de banco de dados e sincronização em nuvem são exclusivas do administrador.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {/* Appwrite */}
-      <div className="glass rounded-3xl p-5 border border-ink/5">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-xl bg-ink/5 text-ink grid place-items-center shrink-0">
-            <Cloud size={16} />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <p className="font-bold text-sm text-ink">Appwrite Cloud</p>
-              {appwriteActive ? (
-                <StatusBadge label="ativo" color="success" />
-              ) : (
-                <StatusBadge label="desativado" color="muted" />
-              )}
-            </div>
-            <p className="text-xs text-muted">Armazenamento NoSQL persistente em nuvem</p>
-          </div>
-        </div>
-        <div className="bg-surface-2 rounded-2xl p-3 text-[10px] text-muted leading-relaxed">
-          Ativo através das variáveis no <code className="bg-ink/5 px-1 rounded">.env.local</code>. Sincroniza boards, tasks, rotinas e conquistas automaticamente.
-        </div>
-      </div>
-
       {/* Supabase */}
       <div className="glass rounded-3xl p-5 border border-ink/5">
         <div className="flex items-center gap-3 mb-3">
@@ -468,6 +461,10 @@ function IntegrationsPanel() {
 }
 
 function McpPanel() {
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = checkIsAdmin(user?.email);
+  const { settings } = useAdminStore();
+
   const mcpUrl = typeof window !== "undefined" ? `${window.location.origin}/api/mcp` : "http://localhost:3000/api/mcp";
   const claudeConfig = JSON.stringify({ mcpServers: { aia: { url: mcpUrl } } }, null, 2);
   const cursorConfig = JSON.stringify({ aia: { url: mcpUrl } }, null, 2);
@@ -475,6 +472,16 @@ function McpPanel() {
   const { tools, loading, refresh } = useMcpTools();
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
+
+  if (!isAdmin && !settings.allowGuestsManageMcp) {
+    return (
+      <div className="glass rounded-3xl p-8 text-center text-muted border border-flat flex flex-col items-center">
+        <Shield size={24} className="mb-2 opacity-50" />
+        <p className="font-bold text-xs text-ink uppercase tracking-wider">Acesso Restrito</p>
+        <p className="text-[10px] text-muted mt-1 max-w-[280px]">Configurações de servidores e ferramentas MCP são exclusivas do administrador.</p>
+      </div>
+    );
+  }
 
   function addServer() {
     if (!newName.trim() || !newUrl.trim()) return;
@@ -610,7 +617,21 @@ function McpPanel() {
 }
 
 function DataPanel() {
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = checkIsAdmin(user?.email);
+  const { settings } = useAdminStore();
+
   const [confirming, setConfirming] = useState<string | null>(null);
+
+  if (!isAdmin && !settings.allowGuestsResetData) {
+    return (
+      <div className="glass rounded-3xl p-8 text-center text-muted border border-flat flex flex-col items-center">
+        <Shield size={24} className="mb-2 opacity-50" />
+        <p className="font-bold text-xs text-ink uppercase tracking-wider">Acesso Restrito</p>
+        <p className="text-[10px] text-muted mt-1 max-w-[280px]">Ações de exclusão de dados e reset do sistema são exclusivas do administrador.</p>
+      </div>
+    );
+  }
 
   function handleReset(type: "all" | "tasks" | "game" | "routine" | "finance") {
     if (type === "all") {
@@ -858,236 +879,7 @@ function VaultPanel() {
   );
 }
 
-function BriefingSettingsField() {
-  const [hour, setHour] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("aia-briefing-hour") ?? "08:00" : "08:00"
-  );
-  const [incFin, setIncFin] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("aia-briefing-inc-finances") !== "false" : true
-  );
-  const [incRot, setIncRot] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("aia-briefing-inc-routine") !== "false" : true
-  );
-  const [saved, setSaved] = useState(false);
 
-  function save() {
-    localStorage.setItem("aia-briefing-hour", hour);
-    localStorage.setItem("aia-briefing-inc-finances", String(incFin));
-    localStorage.setItem("aia-briefing-inc-routine", String(incRot));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  }
-
-  return (
-    <div className="space-y-4">
-      <p className="text-[10px] uppercase tracking-widest font-bold text-muted">Resumo Diário (Briefing da Aia)</p>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="text-[10px] uppercase tracking-widest font-bold text-muted block mb-1">Horário Preferido</label>
-          <select
-            value={hour}
-            onChange={(e) => { setHour(e.target.value); }}
-            className="w-full px-3 py-2 rounded-xl bg-surface-2 text-xs font-semibold outline-none border border-ink/5 text-ink focus:ring-2 focus:ring-ink/10"
-          >
-            {["05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00"].map((h) => (
-              <option key={h} value={h}>{h}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest font-bold text-muted block mb-1">Conteúdos Inclusos</label>
-          <div className="flex flex-col gap-1.5">
-            <label className="flex items-center gap-2 text-xs text-ink font-semibold select-none cursor-pointer">
-              <input type="checkbox" checked={incFin} onChange={(e) => setIncFin(e.target.checked)} className="rounded text-ink focus:ring-ink" />
-              Insights de Finanças
-            </label>
-            <label className="flex items-center gap-2 text-xs text-ink font-semibold select-none cursor-pointer">
-              <input type="checkbox" checked={incRot} onChange={(e) => setIncRot(e.target.checked)} className="rounded text-ink focus:ring-ink" />
-              Meta de Hábitos e Rotinas
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between pt-2">
-        <span className="text-[9px] text-muted">Preferenciais salvas localmente.</span>
-        <button
-          onClick={save}
-          className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-ink text-lime hover:opacity-90 transition flex items-center gap-1.5"
-        >
-          {saved ? <Check size={12} /> : null}
-          {saved ? "Salvo" : "Salvar Briefing"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Aia panel ─────────────────────────────────────────────────────────────────
-
-function ModelField({ label, hint, value, onChange, list }: {
-  label: string;
-  hint: string;
-  value: string;
-  onChange: (v: string) => void;
-  list: string;
-}) {
-  return (
-    <div>
-      <label className="text-[10px] uppercase tracking-widest font-bold text-muted block mb-1">
-        {label}
-      </label>
-      <input
-        list={list}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="vendor/modelo"
-        className="w-full px-3 py-2 rounded-xl bg-surface-2 text-xs font-mono outline-none focus:ring-2 focus:ring-ink/10"
-      />
-      <p className="text-[9px] text-muted mt-1">{hint}</p>
-    </div>
-  );
-}
-
-function AiaPanel() {
-  const provider = useAiStore((s) => s.provider);
-  const setProvider = useAiStore((s) => s.setProvider);
-  const apiKey = useAiStore((s) => s.apiKey);
-  const setApiKey = useAiStore((s) => s.setApiKey);
-  const groqKey = useAiStore((s) => s.groqKey);
-  const setGroqKey = useAiStore((s) => s.setGroqKey);
-  const models = useAiStore((s) => s.models);
-  const setModel = useAiStore((s) => s.setModel);
-  const [showKey, setShowKey] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  function markSaved() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
-  }
-
-  const handleProviderChange = (newProvider: "openrouter" | "groq") => {
-    setProvider(newProvider);
-    if (newProvider === "groq") {
-      setModel("system", "llama-3.1-8b-instant");
-      setModel("chat", "llama-3.3-70b-versatile");
-    } else {
-      setModel("system", "deepseek/deepseek-chat");
-      setModel("chat", "openai/gpt-4o-mini");
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="glass rounded-3xl p-5 border border-ink/5 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-ink/5 text-ink grid place-items-center shrink-0">
-            <Bot size={16} />
-          </div>
-          <div>
-            <p className="font-bold text-sm text-ink">Inteligência do Sistema</p>
-            <p className="text-xs text-muted mt-0.5">
-              Escolha seu provedor e configure sua chave de acesso.
-            </p>
-          </div>
-        </div>
-        <div style={{ height: "0.5px", background: "var(--flat-border)" }} />
-
-        <div>
-          <label className="text-[10px] uppercase tracking-widest font-bold text-muted block mb-1">
-            Provedor de IA
-          </label>
-          <select
-            value={provider}
-            onChange={(e) => handleProviderChange(e.target.value as "openrouter" | "groq")}
-            className="w-full px-3 py-2 rounded-xl bg-surface-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-ink/10"
-          >
-            <option value="openrouter">OpenRouter (Multiprovedores)</option>
-            <option value="groq">Groq Cloud (Ultra-rápido / Llama 3.3)</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="text-[10px] uppercase tracking-widest font-bold text-muted block mb-1">
-            {provider === "groq" ? "Chave Groq (API Key)" : "Chave OpenRouter (BYOK)"}
-          </label>
-          <div className="flex gap-2">
-            <input
-              type={showKey ? "text" : "password"}
-              placeholder={provider === "groq" ? "gsk_..." : "sk-or-v1-..."}
-              value={provider === "groq" ? groqKey : apiKey}
-              onChange={(e) => provider === "groq" ? setGroqKey(e.target.value) : setApiKey(e.target.value)}
-              onBlur={markSaved}
-              className="flex-1 px-3 py-2 rounded-xl bg-surface-2 text-xs font-mono outline-none focus:ring-2 focus:ring-ink/10 text-ink"
-            />
-            <button
-              onClick={() => setShowKey((v) => !v)}
-              className="px-3 rounded-xl bg-surface-2 text-muted hover:text-ink transition"
-            >
-              {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
-          </div>
-          <p className="text-[9px] text-muted mt-2">
-            {provider === "groq"
-              ? "Guardada localmente em seu navegador. Deixe em branco para usar a chave do servidor (GROQ_API_KEY no .env.local)."
-              : "Guardada localmente em seu navegador. Deixe em branco para usar a chave do servidor (OPENROUTER_API_KEY no .env.local)."
-            }
-            {" "}{saved && <span className="text-success font-semibold">Salvo ✓</span>}
-          </p>
-          <a
-            href={provider === "groq" ? "https://console.groq.com/keys" : "https://openrouter.ai/keys"}
-            target="_blank"
-            rel="noreferrer"
-            className="text-[9px] text-ink underline underline-offset-2 mt-1 inline-block font-semibold hover:opacity-80 transition"
-          >
-            Obter chave de API →
-          </a>
-        </div>
-      </div>
-
-      <div className="glass rounded-3xl p-5 border border-ink/5 space-y-4">
-        <BriefingSettingsField />
-      </div>
-
-      <div className="glass rounded-3xl p-5 border border-ink/5 space-y-4">
-        <p className="text-[10px] uppercase tracking-widest font-bold text-muted">Modelos Selecionados</p>
-
-        <datalist id="openrouter-models">
-          {OPENROUTER_MODELS.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.label}{m.note ? ` — ${m.note}` : ""}
-            </option>
-          ))}
-        </datalist>
-
-        <datalist id="groq-models">
-          {GROQ_MODELS.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.label}{m.note ? ` — ${m.note}` : ""}
-            </option>
-          ))}
-        </datalist>
-
-        <ModelField
-          label="Modelo do Sistema"
-          hint="Usado para tarefas rápidas, ações de rotina e insights de feed."
-          value={models.system}
-          onChange={(v) => setModel("system", v)}
-          list={provider === "groq" ? "groq-models" : "openrouter-models"}
-        />
-        <ModelField
-          label="Modelo do Chat"
-          hint="Modelo principal para a conversa do Copilot."
-          value={models.chat}
-          onChange={(v) => setModel("chat", v)}
-          list={provider === "groq" ? "groq-models" : "openrouter-models"}
-        />
-      </div>
-    </div>
-  );
-}
 
 function FeedConfigPanel() {
   const { config, toggleWidget, setAllWidgets } = useFeedConfigStore();
@@ -1156,9 +948,124 @@ function FeedConfigPanel() {
   );
 }
 
+function NewsPanel() {
+  const { sources, addSource, updateSource, removeSource, refreshInterval, setRefreshInterval } = useNewsStore();
+
+  const handleAddSource = () => {
+    if (sources.length >= 3) return;
+    addSource({
+      id: Math.random().toString(36).substring(7),
+      type: "google",
+      topic: "Tecnologia",
+      subtopic: ""
+    });
+  };
+
+  return (
+    <div className="glass rounded-3xl p-5 border border-ink/5 space-y-5">
+      <div className="flex items-center gap-3 border-b border-ink/5 pb-3">
+        <div className="w-9 h-9 rounded-xl bg-ink/5 text-ink grid place-items-center shrink-0">
+          <Newspaper size={16} />
+        </div>
+        <div>
+          <p className="font-bold text-sm text-ink">Meu Jornal (Notícias)</p>
+          <p className="text-xs text-muted mt-0.5 font-medium">Configure até 3 fontes simultâneas para seu jornal</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {sources.map((source, index) => (
+          <div key={source.id} className="p-4 bg-surface-2 rounded-2xl border border-ink/5 relative group">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Fonte {index + 1}</span>
+              {sources.length > 1 && (
+                <button 
+                  onClick={() => removeSource(source.id)}
+                  className="text-muted hover:text-danger transition opacity-0 group-hover:opacity-100"
+                  title="Remover fonte"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <select
+                  value={source.type}
+                  onChange={(e) => updateSource(source.id, { type: e.target.value as any })}
+                  className="w-full px-3 py-2 rounded-xl bg-surface text-xs font-semibold outline-none border border-ink/5 focus:ring-2 focus:ring-ink/10 text-ink"
+                >
+                  <option value="google">Google News Brasil (Busca Livre)</option>
+                  <option value="tabnews">TabNews (Tech / Programação)</option>
+                  <option value="custom_rss">Feed RSS Customizado</option>
+                </select>
+              </div>
+
+              {source.type === "google" && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={source.topic || ""}
+                    onChange={(e) => updateSource(source.id, { topic: e.target.value })}
+                    placeholder="Assunto (Ex: Tecnologia)"
+                    className="flex-1 px-3 py-2 rounded-xl bg-surface text-xs outline-none border border-ink/5 focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                  <input
+                    type="text"
+                    value={source.subtopic || ""}
+                    onChange={(e) => updateSource(source.id, { subtopic: e.target.value })}
+                    placeholder="Nicho (Ex: IA)"
+                    className="flex-1 px-3 py-2 rounded-xl bg-surface text-xs outline-none border border-ink/5 focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                </div>
+              )}
+
+              {source.type === "custom_rss" && (
+                <div>
+                  <input
+                    type="url"
+                    value={source.url || ""}
+                    onChange={(e) => updateSource(source.id, { url: e.target.value })}
+                    placeholder="https://meusite.com/rss.xml"
+                    className="w-full px-3 py-2 rounded-xl bg-surface text-xs font-mono outline-none border border-ink/5 focus:ring-2 focus:ring-ink/10 text-ink"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {sources.length < 3 && (
+          <button 
+            onClick={handleAddSource}
+            className="w-full py-3 rounded-2xl border border-dashed border-ink/20 text-muted hover:text-ink hover:border-ink/40 transition flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider bg-surface-2/30"
+          >
+            <Plus size={14} /> Adicionar Fonte
+          </button>
+        )}
+
+        <div className="pt-2 border-t border-ink/5 mt-4">
+          <label className="text-[10px] uppercase tracking-widest font-bold text-muted block mb-1">Frequência de Atualização (Cache)</label>
+          <select
+            value={refreshInterval}
+            onChange={(e) => setRefreshInterval(Number(e.target.value))}
+            className="w-full px-3 py-2 rounded-xl bg-surface-2 text-xs font-semibold outline-none border border-ink/5 focus:ring-2 focus:ring-ink/10 text-ink"
+          >
+            <option value={1}>A cada 1 hora</option>
+            <option value={6}>A cada 6 horas</option>
+            <option value={12}>A cada 12 horas</option>
+            <option value={24}>Uma vez ao dia</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── category definitions ──────────────────────────────────────────────────────
 
-type CategoryKey = "appearance" | "preferences" | "integrations" | "mcp" | "data" | "seguranca" | "aia" | "feed";
+type CategoryKey = "appearance" | "preferences" | "integrations" | "mcp" | "data" | "seguranca" | "feed" | "news";
 
 const CATEGORIES: {
   key: CategoryKey;
@@ -1203,16 +1110,16 @@ const CATEGORIES: {
     description: "Exportar backups locais ou zerar dados de forma seletiva",
   },
   {
+    key: "news",
+    icon: <Newspaper size={24} />,
+    label: "Meu Jornal",
+    description: "Fontes de notícias, RSS customizado e filtros",
+  },
+  {
     key: "seguranca",
     icon: <Shield size={24} />,
     label: "Segurança",
     description: "Redefina a senha de criptografia do cofre",
-  },
-  {
-    key: "aia",
-    icon: <Bot size={24} />,
-    label: "Inteligência do Sistema",
-    description: "Configure os modelos de IA e o resumo diário (briefing)",
   }
 ];
 
@@ -1287,8 +1194,8 @@ export default function SettingsPage() {
               {active === "integrations"  && <IntegrationsPanel />}
               {active === "mcp"           && <McpPanel />}
               {active === "data"          && <DataPanel />}
+              {active === "news"          && <NewsPanel />}
               {active === "seguranca"     && <VaultPanel />}
-              {active === "aia"           && <AiaPanel />}
             </div>
           </motion.div>
         )}

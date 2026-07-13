@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, MoreHorizontal, Settings, X } from "lucide-react";
+import { Sparkles, MoreHorizontal, Settings, X, Bird } from "lucide-react";
 import { usePerfilStore } from "@/store/usePerfilStore";
 import { NAV_BY_PERFIL } from "@/lib/nav";
 import { PerfilSwitcher } from "./PerfilSwitcher";
@@ -31,9 +31,10 @@ export function BottomNav() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Marca + perfil */}
-            <div className="flex items-center gap-2 px-1 mb-3 pb-3 border-b"
+            <div className="flex items-center gap-1.5 px-1 mb-3 pb-3 border-b"
               style={{ borderColor: "var(--flat-border)" }}>
-              <span className="font-bold text-sm text-ink">AIA OS</span>
+              <Bird size={14} className="text-ink" />
+              <span className="font-bold text-sm text-ink">AIA</span>
               <div className="ml-auto"><PerfilSwitcher size="sm" /></div>
               <button onClick={() => setOpen(false)} className="p-1.5 text-muted hover:text-ink">
                 <X size={16} />

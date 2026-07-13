@@ -32,6 +32,7 @@ export interface RecurringExpense {
   // novos campos
   isIncome?: boolean;
   isInvestimento?: boolean;
+  formaPagamento?: "Dinheiro" | "Pix" | "Débito Automático" | "Cartão de Crédito";
 }
 
 // ─── Invite ──────────────────────────────────────────────────────────────────

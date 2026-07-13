@@ -11,12 +11,12 @@ export function FeedVaultWidget() {
   const status = useVaultStore((s) => s.status);
 
   return (
-    <div className="glass rounded-3xl overflow-hidden flex flex-col border border-ink/5" style={{ borderColor: "var(--flat-border)" }}>
+    <div className="glass rounded-3xl overflow-hidden flex flex-col border" style={{ borderColor: "var(--flat-border)" }}>
       {/* Header */}
       <button
         onClick={toggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-black/[0.02]"
-        style={{ borderBottom: collapsed ? "none" : "0.5px solid rgba(14,11,12,0.06)" }}
+        style={{ borderBottom: collapsed ? "none" : "1px solid var(--flat-border)" }}
       >
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl grid place-items-center shrink-0 bg-ink text-surface shadow-sm">
@@ -52,7 +52,7 @@ export function FeedVaultWidget() {
           >
             <div className="p-4 space-y-3">
               {status === "locked" || status === "no-master" ? (
-                <div className="py-4 text-center bg-surface-2 rounded-2xl border border-dashed border-ink/20">
+                <div className="py-4 text-center bg-surface-2 rounded-2xl border border-dashed" style={{ borderColor: "var(--flat-border)" }}>
                   <Lock size={24} className="mx-auto text-ink/20 mb-2" />
                   <p className="text-xs font-semibold text-muted mb-2">Seu cofre está trancado.</p>
                   <Link href="/cofre" className="inline-block px-4 py-2 bg-white rounded-xl text-[10px] font-bold text-ink shadow-sm hover:bg-black/5 transition">
@@ -62,12 +62,12 @@ export function FeedVaultWidget() {
               ) : (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-surface-2 rounded-2xl border border-ink/5 flex flex-col items-center text-center">
+                    <div className="p-3 bg-surface-2 rounded-2xl border flex flex-col items-center text-center" style={{ borderColor: "var(--flat-border)" }}>
                       <KeyRound size={16} className="text-muted mb-1" />
                       <span className="text-lg font-bold text-ink">{entries.length}</span>
                       <span className="text-[9px] uppercase tracking-wider text-muted font-bold">Credenciais</span>
                     </div>
-                    <div className="p-3 bg-surface-2 rounded-2xl border border-ink/5 flex flex-col items-center text-center">
+                    <div className="p-3 bg-surface-2 rounded-2xl border flex flex-col items-center text-center" style={{ borderColor: "var(--flat-border)" }}>
                       <Shield size={16} className="text-success mb-1" />
                       <span className="text-lg font-bold text-success">Seguro</span>
                       <span className="text-[9px] uppercase tracking-wider text-muted font-bold">Status</span>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Flag, Tag, Trash2, ChevronDown, Target, DollarSign, Repeat } from "lucide-react";
+import { Calendar, Flag, Tag, Trash2, ChevronDown, Target, DollarSign, Repeat, User } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/Dialog";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -35,44 +35,43 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
   const [tagInput, setTagInput] = useState("");
   const [tab, setTab] = useState<"details" | "activity">("details");
   const [recurrence, setRecurrence] = useState<Recurrence | undefined>(undefined);
+  const [clientType, setClientType] = useState<"pessoal" | "cliente" | undefined>(undefined);
+  const [clientName, setClientName] = useState("");
+
+  const [dueDate, setDueDate] = useState<number | undefined>(task?.dueDate);
+  const [priority, setPriority] = useState<Priority>(task?.priority ?? "medium");
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description ?? "");
       setRecurrence(task.recurrence);
+      setClientType(task.clientType);
+      setClientName(task.clientName ?? "");
+      setDueDate(task.dueDate);
+      setPriority(task.priority);
     }
   }, [task?.id]); // eslint-disable-line
 
   if (!taskId || !task) return null;
 
-  function save() {
+  function handleSave() {
     const newTitle = title.trim() || task!.title;
     const renamed = newTitle !== task!.title;
-    updateTask(task!.id, { title: newTitle, description, recurrence });
+    updateTask(task!.id, { 
+      title: newTitle, 
+      description, 
+      recurrence,
+      clientType,
+      clientName: clientType === "cliente" ? clientName : undefined,
+      dueDate,
+      priority
+    });
     if (renamed) logActivity(task!.id, "renamed", { title: newTitle });
-  }
-
-  function handleRecurrenceChange(type: RecurrenceType | undefined) {
-    if (!type) {
-      setRecurrence(undefined);
-      updateTask(task!.id, { recurrence: undefined });
-    } else {
-      const next: Recurrence = { type };
-      setRecurrence(next);
-      updateTask(task!.id, { recurrence: next });
-    }
-  }
-
-  function toggleDay(day: number) {
-    if (!recurrence || recurrence.type !== "weekly") return;
-    const days = recurrence.daysOfWeek ?? [];
-    const next: Recurrence = {
-      ...recurrence,
-      daysOfWeek: days.includes(day) ? days.filter((d) => d !== day) : [...days, day],
-    };
-    setRecurrence(next);
-    updateTask(task!.id, { recurrence: next });
+    if (priority !== task!.priority) logActivity(task!.id, "priority_changed", { to: priority });
+    if (dueDate !== task!.dueDate) logActivity(task!.id, "due_changed", { to: dueDate });
+    
+    onClose(); // Close modal after saving
   }
 
   function handleComplete() {
@@ -101,32 +100,33 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
     updateTask(task!.id, { tags: task!.tags.filter((x) => x !== t) });
   }
 
-  const dueDateValue = task.dueDate
-    ? new Date(task.dueDate).toISOString().slice(0, 16)
-    : "";
+  const dueDateValue = dueDate ? new Date(dueDate).toISOString().slice(0, 16) : "";
 
   return (
     <Dialog open={!!taskId} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent size="lg">
-        <div className="p-6 overflow-y-auto">
+      {/* We increase max width here directly or use a custom class */}
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-surface">
+        
+        {/* Header Content */}
+        <div className="flex-1 overflow-y-auto p-8">
           <DialogTitle>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              onBlur={save}
-              className="text-xl font-bold border-0 p-0 focus:ring-0 bg-transparent"
+              className="text-2xl font-black font-serif border-0 p-0 focus:ring-0 bg-transparent text-ink placeholder-muted/30"
+              placeholder="Título da tarefa..."
             />
           </DialogTitle>
 
           {isSupabaseEnabled() && (
-            <div className="mt-3 flex gap-1 border-b border-ink/5 -mx-1 px-1">
+            <div className="mt-4 flex gap-1 border-b border-ink/5 -mx-2 px-2">
               {(["details", "activity"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`text-xs px-3 py-2 -mb-px border-b-2 transition ${
+                  className={`text-xs px-4 py-2.5 -mb-px border-b-2 transition uppercase tracking-widest font-bold ${
                     tab === t
-                      ? "border-ink font-semibold text-ink"
+                      ? "border-ink text-ink"
                       : "border-transparent text-muted hover:text-ink"
                   }`}
                 >
@@ -136,128 +136,178 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
             </div>
           )}
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6">
-            <div className="space-y-5">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-10">
+            {/* Left Column (Main Details) */}
+            <div className="space-y-8">
               {tab === "details" ? (
                 <>
                   <div>
-                    <label className="text-xs uppercase tracking-wider font-semibold text-muted mb-1 block">
-                      Descrição
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-muted mb-2 block">
+                      Descrição e Anotações
                     </label>
                     <Textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      onBlur={save}
-                      rows={4}
+                      rows={5}
+                      className="bg-surface-2/50 border-ink/5 resize-none focus:bg-surface focus:border-ink/20 transition rounded-2xl"
                       placeholder="Adicione contexto, links, anotações..."
                     />
                   </div>
 
                   <SubtaskList taskId={task.id} />
-                  <TaskTimer taskId={task.id} />
+                  
+                  <div className="pt-4 border-t border-ink/5">
+                    <TaskTimer taskId={task.id} />
+                  </div>
+                  
                   <HourlyRateBlock task={task} updateTask={updateTask} />
-                  <ReminderConfig taskId={task.id} dueDate={task.dueDate} />
+                  <ReminderConfig taskId={task.id} dueDate={dueDate} />
                 </>
               ) : (
                 <ActivityFeed taskId={task.id} />
               )}
             </div>
 
-            <aside className="space-y-3">
-              <Button
-                variant={task.column === "done" ? "light" : "primary"}
-                onClick={handleComplete}
-                className="w-full"
-              >
-                {task.column === "done" ? "Reabrir tarefa" : "Concluir tarefa"}
-              </Button>
-
-              {task.column !== "done" && (
+            {/* Right Column (Properties Sidebar) */}
+            <aside className="space-y-6">
+              
+              <div className="flex gap-2">
                 <Button
-                  variant="dark"
-                  className="w-full"
-                  onClick={() => {
-                    setFocused(task.id);
-                    onClose();
-                    router.push("/foco");
-                  }}
+                  variant={task.column === "done" ? "light" : "primary"}
+                  onClick={handleComplete}
+                  className="flex-1 text-xs py-2 h-auto"
                 >
-                  <Target size={14} />
-                  Focar nesta tarefa
+                  {task.column === "done" ? "Reabrir" : "Concluir Tarefa"}
                 </Button>
-              )}
+                {task.column !== "done" && (
+                  <Button
+                    variant="dark"
+                    className="flex-1 text-xs py-2 h-auto"
+                    onClick={() => {
+                      setFocused(task.id);
+                      onClose();
+                      router.push("/foco");
+                    }}
+                  >
+                    <Target size={14} className="mr-1" />
+                    Focar
+                  </Button>
+                )}
+              </div>
 
-              <PropertyRow icon={<Flag size={13} />} label="Prioridade">
-                <PrioritySelect
-                  value={task.priority}
-                  onChange={(p) => {
-                    updateTask(task.id, { priority: p });
-                    logActivity(task.id, "priority_changed", { to: p });
-                  }}
-                />
-              </PropertyRow>
+              <div className="space-y-1">
+                <PropertyRow icon={<User size={13} />} label="Tipo de Tarefa">
+                  <div className="flex flex-col gap-2">
+                    <select 
+                      value={clientType || ""} 
+                      onChange={(e) => setClientType((e.target.value as any) || undefined)}
+                      className="text-xs bg-surface-2/50 hover:bg-surface-2 rounded-xl px-3 py-2 outline-none w-full border border-ink/5 font-semibold transition"
+                    >
+                      <option value="">Não definido</option>
+                      <option value="pessoal">Pessoal</option>
+                      <option value="cliente">Cliente (Específico)</option>
+                    </select>
+                    {clientType === "cliente" && (
+                      <input
+                        type="text"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                        placeholder="Nome do cliente..."
+                        className="text-xs bg-surface-2/50 hover:bg-surface-2 focus:bg-surface rounded-xl px-3 py-2 outline-none w-full border border-ink/5 transition"
+                      />
+                    )}
+                  </div>
+                </PropertyRow>
 
-              <PropertyRow icon={<Calendar size={13} />} label="Prazo">
-                <input
-                  type="datetime-local"
-                  value={dueDateValue}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    const newDue = v ? new Date(v).getTime() : undefined;
-                    updateTask(task.id, { dueDate: newDue });
-                    logActivity(task.id, "due_changed", { to: newDue });
-                  }}
-                  className="text-xs bg-transparent outline-none w-full"
-                />
-              </PropertyRow>
+                <PropertyRow icon={<Flag size={13} />} label="Prioridade">
+                  <PrioritySelect
+                    value={priority}
+                    onChange={setPriority}
+                  />
+                </PropertyRow>
 
-              <PropertyRow icon={<Repeat size={13} />} label="Repetir">
-                <RecurrenceSelect
-                  recurrence={recurrence}
-                  onTypeChange={handleRecurrenceChange}
-                  onToggleDay={toggleDay}
-                />
-              </PropertyRow>
+                <PropertyRow icon={<Calendar size={13} />} label="Prazo">
+                  <input
+                    type="datetime-local"
+                    value={dueDateValue}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDueDate(v ? new Date(v).getTime() : undefined);
+                    }}
+                    className="text-xs bg-surface-2/50 hover:bg-surface-2 rounded-xl px-3 py-2 outline-none w-full border border-ink/5 font-semibold transition"
+                  />
+                </PropertyRow>
+
+                <PropertyRow icon={<Repeat size={13} />} label="Repetição">
+                  <select
+                    value={recurrence?.type || ""}
+                    onChange={(e) => {
+                      const val = e.target.value as RecurrenceType | "";
+                      setRecurrence(val ? { type: val } : undefined);
+                    }}
+                    className="text-xs bg-surface-2/50 hover:bg-surface-2 rounded-xl px-3 py-2 outline-none w-full border border-ink/5 font-semibold transition"
+                  >
+                    <option value="">Não repetir</option>
+                    <option value="daily">Diário</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly">Mensal</option>
+                  </select>
+                </PropertyRow>
+
+                <PropertyRow icon={<Tag size={13} />} label="Tags">
+                  <div className="flex flex-col gap-2">
+                    {task.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {task.tags.map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => removeTag(t)}
+                            className="text-[10px] bg-ink/5 text-ink px-2 py-0.5 rounded-md hover:bg-danger hover:text-white transition group flex items-center gap-1 font-semibold"
+                          >
+                            #{t}
+                            <span className="opacity-0 group-hover:opacity-100 scale-75">×</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      placeholder="Adicionar tag..."
+                      className="text-xs bg-transparent border-b border-ink/10 pb-1 outline-none w-full placeholder:text-muted/50"
+                      onKeyDown={(e) => e.key === "Enter" && addTag()}
+                      onBlur={addTag}
+                    />
+                  </div>
+                </PropertyRow>
+              </div>
 
               {isSupabaseEnabled() && <AssigneeSelect taskId={task.id} />}
-
               <TaskCollaborators task={task} />
-
-              <PropertyRow icon={<Tag size={13} />} label="Tags">
-                <div className="flex flex-wrap gap-1 mb-1">
-                  {task.tags.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => removeTag(t)}
-                      className="text-[10px] bg-sage/40 px-2 py-0.5 rounded-full hover:bg-danger hover:text-white transition"
-                    >
-                      #{t} ×
-                    </button>
-                  ))}
-                </div>
-                <input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  placeholder="adicionar tag"
-                  className="text-xs bg-transparent outline-none w-full"
-                  onKeyDown={(e) => e.key === "Enter" && addTag()}
-                  onBlur={addTag}
-                />
-              </PropertyRow>
-
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    deleteTask(task.id);
-                    onClose();
-                  }}
-                  className="w-full flex items-center justify-center gap-2 text-xs text-danger hover:bg-danger/10 py-2 rounded-full transition"
-                >
-                  <Trash2 size={12} />
-                  Excluir tarefa
-                </button>
-              </div>
             </aside>
+          </div>
+        </div>
+
+        {/* Fixed Footer for Save Action */}
+        <div className="flex items-center justify-between p-4 border-t border-ink/5 bg-surface-2/30">
+          <button
+            onClick={() => {
+              deleteTask(task.id);
+              onClose();
+            }}
+            className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-danger hover:bg-danger/10 px-4 py-2 rounded-full transition"
+          >
+            <Trash2 size={14} />
+            Excluir Tarefa
+          </button>
+
+          <div className="flex items-center gap-2">
+            <Button variant="light" onClick={onClose} className="px-6 py-2 text-xs">
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={handleSave} className="px-6 py-2 text-xs font-bold shadow-sm">
+              Salvar Alterações
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -275,12 +325,12 @@ function PropertyRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-surface-2 rounded-2xl p-3">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted mb-1">
+    <div className="flex flex-col gap-1.5 border-b border-ink/5 pb-3 last:border-0">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-muted">
         {icon}
         {label}
       </div>
-      {children}
+      <div className="pl-0">{children}</div>
     </div>
   );
 }

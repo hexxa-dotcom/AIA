@@ -14,12 +14,15 @@ interface State {
   loading: boolean;
   initialized: boolean;
   authChecked: boolean;
+  otpUserId: string | null;
 }
 
 interface Actions {
   init: () => Promise<void>;
   signInWithEmail: (email: string) => Promise<{ ok: boolean; error?: string }>;
   signInWithPassword: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  sendOtpToken: (email: string) => Promise<{ ok: boolean; userId?: string; error?: string }>;
+  verifyOtpToken: (userId: string, secret: string) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -28,6 +31,7 @@ export const useAuthStore = create<State & Actions>((set, get) => ({
   loading: false,
   initialized: false,
   authChecked: false,
+  otpUserId: null,
 
   init: async () => {
     if (get().initialized) return;
@@ -52,22 +56,19 @@ export const useAuthStore = create<State & Actions>((set, get) => ({
           }
         }
         const sessionUser = await account.get();
-        set({
-          authChecked: true,
-          user: { id: sessionUser.$id, email: sessionUser.email },
-        });
-      } catch (e: any) {
-        try {
-          await account.createAnonymousSession();
-          const sessionUser = await account.get();
+        if (!sessionUser.email || sessionUser.email.includes("anon")) {
+          try {
+            await account.deleteSession("current");
+          } catch {}
+          set({ authChecked: true, user: null });
+        } else {
           set({
             authChecked: true,
-            user: { id: sessionUser.$id, email: sessionUser.email || "anon@aia.app" },
+            user: { id: sessionUser.$id, email: sessionUser.email },
           });
-        } catch (anonErr: any) {
-          console.error("[auth] Falha ao criar sessão anônima:", anonErr);
-          set({ authChecked: true, user: null });
         }
+      } catch (e: any) {
+        set({ authChecked: true, user: null });
       }
       return;
     }
@@ -134,6 +135,54 @@ export const useAuthStore = create<State & Actions>((set, get) => ({
     set({ loading: false });
     if (error) return { ok: false, error: error.message };
     return { ok: true };
+  },
+
+  sendOtpToken: async (email) => {
+    set({ loading: true });
+    if (isAppwriteEnabled()) {
+      const { account } = getAppwrite();
+      if (!account) {
+        set({ loading: false });
+        return { ok: false, error: "Appwrite não configurado" };
+      }
+      try {
+        const token = await account.createEmailToken(ID.unique(), email);
+        set({ loading: false, otpUserId: token.userId });
+        return { ok: true, userId: token.userId };
+      } catch (e: any) {
+        set({ loading: false });
+        return { ok: false, error: e?.message || "Erro ao enviar código de acesso" };
+      }
+    }
+    set({ loading: false });
+    return { ok: false, error: "OTP só é suportado via Appwrite" };
+  },
+
+  verifyOtpToken: async (userId, secret) => {
+    set({ loading: true });
+    if (isAppwriteEnabled()) {
+      const { account } = getAppwrite();
+      if (!account) {
+        set({ loading: false });
+        return { ok: false, error: "Appwrite não configurado" };
+      }
+      try {
+        await account.createSession(userId, secret);
+        const sessionUser = await account.get();
+        set({
+          authChecked: true,
+          user: { id: sessionUser.$id, email: sessionUser.email },
+          otpUserId: null,
+          loading: false,
+        });
+        return { ok: true };
+      } catch (e: any) {
+        set({ loading: false });
+        return { ok: false, error: e?.message || "Código incorreto ou expirado" };
+      }
+    }
+    set({ loading: false });
+    return { ok: false, error: "OTP só é suportado via Appwrite" };
   },
 
   signInWithPassword: async (email, password) => {
@@ -207,4 +256,3 @@ export function useRequiresAuth(): "ok" | "needs-login" | "no-supabase" {
   const user = useAuthStore((s) => s.user);
   return user ? "ok" : "needs-login";
 }
-

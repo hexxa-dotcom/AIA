@@ -34,7 +34,7 @@ export function Column({ column, tasks, onOpen, isViewer }: { column: ColumnKey;
   }
 
   return (
-    <div className="flex-1 min-w-[300px] sm:min-w-[280px] max-w-[360px] flex flex-col glass rounded-3xl p-3"
+    <div className="flex-1 min-w-[280px] md:min-w-0 max-w-[360px] md:max-w-none flex flex-col glass rounded-3xl p-3"
       style={{ scrollSnapAlign: "start" }}>
       <div className="flex items-center justify-between mb-3 px-1">
         <div>
@@ -61,7 +61,7 @@ export function Column({ column, tasks, onOpen, isViewer }: { column: ColumnKey;
       <div
         ref={setNodeRef}
         className={cn(
-          "flex-1 flex flex-col gap-2 min-h-[200px] p-1 rounded-2xl transition-colors",
+          "flex-1 flex flex-col gap-3 min-h-[200px] p-1 rounded-2xl transition-colors",
           isOver && "bg-lime/20",
         )}
       >

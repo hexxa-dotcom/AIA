@@ -34,13 +34,17 @@ export function ExpenseList({
   imovelFilter,
   memberFilter,
   includeShared,
+  isIncomeOnly,
+  isInvestimentoOnly,
 }: {
-  category: ExpenseCategory;
+  category?: ExpenseCategory;
   yearMonth: string;
   onEdit: (id: string) => void;
   imovelFilter?: string;
   memberFilter?: string;
   includeShared?: boolean;
+  isIncomeOnly?: boolean;
+  isInvestimentoOnly?: boolean;
 }) {
   const all = useFinanceStore((s) => s.expenses);
   const togglePaid = useFinanceStore((s) => s.togglePaid);
@@ -48,6 +52,9 @@ export function ExpenseList({
 
   let expenses = all.filter((e) => {
     if (!isExpenseActiveInMonth(e, yearMonth)) return false;
+    if (isIncomeOnly) return e.isIncome;
+    if (isInvestimentoOnly) return e.isInvestimento;
+    if (e.isIncome || e.isInvestimento) return false;
     if (includeShared && e.sharedBy) return true;
     return e.category === category;
   });
@@ -76,7 +83,7 @@ export function ExpenseList({
   const paidCnt = expenses.filter((e) => e.payments[yearMonth]).length;
 
   if (expenses.length === 0) {
-    return <EmptyState icon="" />;
+    return <EmptyState icon="" isIncomeOnly={isIncomeOnly} isInvestimentoOnly={isInvestimentoOnly} />;
   }
 
   return (
@@ -116,6 +123,7 @@ export function ExpenseList({
         total={expenses.length}
         paidAmt={paidAmt}
         totalAmt={total}
+        isIncomeOnly={isIncomeOnly}
       />
     </div>
   );
@@ -251,22 +259,23 @@ function ExpenseRow({
 
   return (
     <div
-      className="flex items-center gap-3 px-3.5 py-3 rounded-2xl group transition-all"
+      className="flex items-start gap-3.5 p-4 rounded-2xl group transition-all"
       style={{
         background: isPaid
           ? "rgba(150,150,150,0.05)"
-          : "rgba(255,255,255,0.85)",
-        border: `1.5px solid ${isPaid ? "rgba(150,150,150,0.20)" : "rgba(0,0,0,0.06)"}`,
-        boxShadow: isPaid ? "none" : "0 1px 4px rgba(0,0,0,0.04)",
+          : "var(--color-surface)",
+        border: "1.5px solid var(--flat-border)",
+        opacity: isPaid ? 0.65 : 1,
+        boxShadow: isPaid ? "none" : "0 1px 4px rgba(0,0,0,0.02)",
       }}
     >
       {/* circle checkbox */}
       <button
         onClick={onToggle}
-        className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all"
+        className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all mt-0.5"
         style={{
-          background: isPaid ? "#1a1a1a" : "transparent",
-          border: `2px solid ${isPaid ? "#1a1a1a" : "rgba(0,0,0,0.18)"}`,
+          background: isPaid ? (expense.isIncome ? "var(--color-success)" : "var(--color-ink)") : "transparent",
+          border: `1.5px solid ${isPaid ? (expense.isIncome ? "var(--color-success)" : "var(--color-ink)") : "var(--flat-border)"}`,
         }}
       >
         {isPaid && <Check size={10} color="#fff" strokeWidth={3} />}
@@ -276,12 +285,12 @@ function ExpenseRow({
       <div className="flex-1 min-w-0">
         <p
           className="text-sm font-semibold leading-snug truncate"
-          style={{ color: isPaid ? "#999" : "#141414" }}
+          style={{ color: isPaid ? "var(--color-muted)" : "var(--color-ink)" }}
         >
           {expense.name}
         </p>
-        <div className="flex items-center flex-wrap gap-1 mt-0.5">
-          <span className="text-[10px] text-muted">dia {expense.dueDay}</span>
+        <div className="flex items-center flex-wrap gap-1.5 mt-1">
+          <span className="text-[10px] font-medium text-muted">Venc. dia {expense.dueDay}</span>
 
           {expense.tipo === "recorrente" && (
             <span className="inline-flex items-center gap-0.5 text-[9px] text-muted">
@@ -291,7 +300,7 @@ function ExpenseRow({
           {expense.tipo === "unico" && (
             <span
               className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-              style={{ background: "rgba(150,150,150,0.12)", color: "#8c8c88" }}
+              style={{ background: "var(--color-surface-3)", color: "var(--color-muted)" }}
             >
               <Zap size={7} /> único
             </span>
@@ -299,7 +308,7 @@ function ExpenseRow({
           {parcela && (
             <span
               className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-              style={{ background: "rgba(0,0,0,0.16)", color: "#141414" }}
+              style={{ background: "var(--color-ink)", color: "var(--color-surface)" }}
             >
               <Layers size={7} /> {parcela}
             </span>
@@ -307,7 +316,7 @@ function ExpenseRow({
           {expense.isCartao && !showCategory && (
             <span
               className="inline-flex items-center gap-0.5 text-[9px]"
-              style={{ color: "#8c8c88" }}
+              style={{ color: "var(--color-muted)" }}
             >
               <CreditCard size={7} /> {expense.cartaoNome || "Cartão"}
             </span>
@@ -315,7 +324,7 @@ function ExpenseRow({
           {expense.imovel && (
             <span
               className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full"
-              style={{ background: "rgba(40,40,40,0.12)", color: "#3d3d3d" }}
+              style={{ background: "var(--color-surface-2)", color: "var(--color-ink-soft)" }}
             >
               <Home size={7} /> {expense.imovel}
             </span>
@@ -323,7 +332,7 @@ function ExpenseRow({
           {expense.familyMember && (
             <span
               className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full"
-              style={{ background: "rgba(40,40,40,0.12)", color: "#555552" }}
+              style={{ background: "var(--color-surface-2)", color: "var(--color-ink-soft)" }}
             >
               <Users size={7} /> {expense.familyMember}
             </span>
@@ -331,7 +340,7 @@ function ExpenseRow({
           {isShared && (
             <span
               className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-              style={{ background: "rgba(0,0,0,0.09)", color: "#141414" }}
+              style={{ background: "var(--color-surface-3)", color: "var(--color-ink)" }}
             >
               <Share2 size={7} /> {expense.sharedWith!.length}
             </span>
@@ -339,7 +348,7 @@ function ExpenseRow({
           {isReceived && (
             <span
               className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full"
-              style={{ background: "rgba(150,150,150,0.30)", color: "#3d3d3d" }}
+              style={{ background: "var(--color-surface-3)", color: "var(--color-ink-soft)" }}
             >
               <UserCheck size={7} /> {expense.sharedBy}
             </span>
@@ -360,13 +369,40 @@ function ExpenseRow({
             </span>
           )}
         </div>
+
+        {/* payment method & notes */}
+        {(expense.formaPagamento || expense.isCartao || expense.notes) && (
+          <div className="flex items-center flex-wrap gap-2 mt-2">
+            {expense.formaPagamento && (
+              <span
+                className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                style={{ background: "var(--color-surface-2)", color: "var(--color-ink-soft)", border: "1px solid var(--flat-border)" }}
+              >
+                <CreditCard size={9} /> {expense.formaPagamento}
+              </span>
+            )}
+            {expense.isCartao && !showCategory && (
+              <span
+                className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                style={{ background: "var(--color-surface-2)", color: "var(--color-ink-soft)", border: "1px solid var(--flat-border)" }}
+              >
+                <CreditCard size={9} /> {expense.cartaoNome || "Cartão"}
+              </span>
+            )}
+            {expense.notes && (
+              <p className="text-[10px] text-muted italic line-clamp-1 border-l border-flat pl-2">
+                {expense.notes}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* amount + actions */}
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <p
           className={cn(
-            "text-sm font-bold tabular-nums",
+            "text-base font-bold tabular-nums leading-none mt-0.5",
             expense.isIncome && !isPaid ? "text-success" :
             expense.isInvestimento && !isPaid ? "text-purple-500" :
             isPaid ? "text-muted" : "text-ink"
@@ -400,11 +436,13 @@ function FooterTotals({
   total,
   paidAmt,
   totalAmt,
+  isIncomeOnly,
 }: {
   paidCnt: number;
   total: number;
   paidAmt: number;
   totalAmt: number;
+  isIncomeOnly?: boolean;
 }) {
   const pct = totalAmt > 0 ? Math.round((paidAmt / totalAmt) * 100) : 0;
   return (
@@ -421,7 +459,9 @@ function FooterTotals({
       </div>
       <div className="flex items-center justify-between">
         <span className="text-[11px] text-muted">
-          {paidCnt} de {total} pago{paidCnt !== 1 ? "s" : ""} · {pct}%
+          {isIncomeOnly
+            ? `${paidCnt} de ${total} recebido${paidCnt !== 1 ? "s" : ""} · ${pct}%`
+            : `${paidCnt} de ${total} pago${paidCnt !== 1 ? "s" : ""} · ${pct}%`}
         </span>
         <div className="text-sm font-bold tabular-nums">
           <span className="text-success">{fmt(paidAmt)}</span>
@@ -438,9 +478,13 @@ function FooterTotals({
 function EmptyState({
   icon,
   isCartao,
+  isIncomeOnly,
+  isInvestimentoOnly,
 }: {
   icon?: string | null;
   isCartao?: boolean;
+  isIncomeOnly?: boolean;
+  isInvestimentoOnly?: boolean;
 }) {
   return (
     <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -454,12 +498,20 @@ function EmptyState({
       <p className="font-semibold text-sm text-muted">
         {isCartao
           ? "Nenhum lançamento de cartão"
-          : "Nenhuma despesa cadastrada"}
+          : isIncomeOnly
+            ? "Nenhuma receita cadastrada"
+            : isInvestimentoOnly
+              ? "Nenhum investimento cadastrado"
+              : "Nenhuma despesa cadastrada"}
       </p>
       <p className="text-[11px] text-muted/60">
         {isCartao
-          ? 'Marque despesas como"cobrado no cartão".'
-          : 'Clique em"Nova despesa"para começar.'}
+          ? 'Marque despesas como "cobrado no cartão".'
+          : isIncomeOnly
+            ? 'Clique em "Novo Lançamento" para cadastrar uma entrada.'
+            : isInvestimentoOnly
+              ? 'Clique em "Novo Lançamento" para cadastrar um investimento.'
+              : 'Clique em "Novo Lançamento" para começar.'}
       </p>
     </div>
   );

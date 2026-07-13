@@ -5,7 +5,7 @@ import { genId as nanoid } from "@/lib/id";
 
 export interface StudyItem {
   id: string;
-  type: "book" | "course";
+  type: "book" | "course" | "subject" | "exam";
   title: string;
   authorOrProvider?: string;
   status: "to_do" | "doing" | "done";
@@ -13,6 +13,10 @@ export interface StudyItem {
   totalProgress: number;
   coverUrl?: string;
   emoji?: string;
+  dueDate?: number; // timestamp for exams or assignments
+  url?: string;
+  notes?: string;
+  materials?: {id: string, name: string, url: string}[];
 }
 
 interface State {
