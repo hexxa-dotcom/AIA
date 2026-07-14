@@ -1,18 +1,28 @@
 "use client";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, List, CalendarDays, Clock, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, List, CalendarDays, Clock, Trash2, Inbox } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Topbar } from "@/components/layout/Topbar";
 import { useTaskStore } from "@/store/useTaskStore";
 import { useAgendaStore } from "@/store/useAgendaStore";
+import { useAgendaInviteStore } from "@/store/useAgendaInviteStore";
 import { AddAppointmentModal } from "@/components/agenda/AddAppointmentModal";
+import { AgendaInviteInbox } from "@/components/agenda/AgendaInviteInbox";
 import { cn, todayKey } from "@/lib/utils";
 
 const WEEKDAYS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 
-type View = "mes" | "lista" | "dia";
+type View = "mes" | "lista" | "dia" | "timeline";
 
-const VIEW_LABELS: Record<View, string> = { mes: "Mês", lista: "Lista", dia: "Dia" };
+const VIEW_LABELS: Record<View, string> = { mes: "Mês", lista: "Lista", dia: "Dia", timeline: "Timeline" };
+
+function startOfWeek(d: Date): Date {
+  const x = new Date(d);
+  const dow = x.getDay();
+  x.setDate(x.getDate() - dow);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
 
 export default function AgendaPage() {
   const [view, setView] = useState<View>("mes");
@@ -21,6 +31,9 @@ export default function AgendaPage() {
   const [cursor, setCursor] = useState(() => {
     const d = new Date(); d.setDate(1); return d;
   });
+  const [timelineAnchor, setTimelineAnchor] = useState<Date>(() => startOfWeek(new Date()));
+  const [showInbox, setShowInbox] = useState(false);
+  const pendingInvites = useAgendaInviteStore((s) => s.pendingCount());
   const tasks = useTaskStore((s) => s.tasks);
   const appointments = useAgendaStore((s) => s.appointments);
   const removeAppt = useAgendaStore((s) => s.remove);
@@ -116,9 +129,43 @@ export default function AgendaPage() {
     reuniao: "bg-info", pessoal: "bg-warning", saude: "bg-success", outro: "bg-ink/40",
   };
 
+  // --- TIMELINE VIEW ---
+  const timelineDays = useMemo(() => {
+    const arr: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(timelineAnchor);
+      d.setDate(timelineAnchor.getDate() + i);
+      arr.push(d);
+    }
+    return arr;
+  }, [timelineAnchor]);
+
+  function shiftTimelineWeek(by: number) {
+    const d = new Date(timelineAnchor);
+    d.setDate(d.getDate() + by * 7);
+    setTimelineAnchor(d);
+  }
+
   return (
     <AppShell>
-      <Topbar title="Agenda" subtitle="Compromissos, tarefas e eventos" />
+      <Topbar 
+        title="Agenda" 
+        subtitle="Compromissos, tarefas e eventos" 
+        right={
+          <button
+            onClick={() => setShowInbox(true)}
+            className="relative w-10 h-10 rounded-full flex items-center justify-center hover:bg-black/5 transition text-muted bg-white shadow-sm border border-flat"
+            title="Convites de agenda"
+          >
+            <Inbox size={18} />
+            {pendingInvites > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-danger text-white text-[10px] font-bold rounded-full grid place-items-center">
+                {pendingInvites}
+              </span>
+            )}
+          </button>
+        }
+      />
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -136,7 +183,7 @@ export default function AgendaPage() {
 
         {/* View toggle */}
         <div className="flex items-center gap-1 bg-white rounded-full p-1.5 shadow-sm">
-          {(["mes", "lista", "dia"] as View[]).map((v) => (
+          {(["mes", "lista", "dia", "timeline"] as View[]).map((v) => (
             <button key={v} onClick={() => setView(v)}
               className={cn("px-4 py-2 rounded-full text-xs font-semibold transition",
                 view === v ? "bg-ink text-surface" : "text-muted hover:text-ink")}>
@@ -281,7 +328,87 @@ export default function AgendaPage() {
         </div>
       )}
 
+      {/* TIMELINE */}
+      {view === "timeline" && (
+        <div className="bg-transparent rounded-3xl">
+          <div className="flex items-center gap-2 mb-3 bg-white rounded-full px-3 py-1.5 w-fit shadow-sm">
+            <button onClick={() => shiftTimelineWeek(-1)} className="p-1.5 rounded-full hover:bg-surface-2">
+              <ChevronLeft size={14} />
+            </button>
+            <button onClick={() => setTimelineAnchor(startOfWeek(new Date()))} className="text-xs font-semibold px-3">
+              Esta semana
+            </button>
+            <button onClick={() => shiftTimelineWeek(1)} className="p-1.5 rounded-full hover:bg-surface-2">
+              <ChevronRight size={14} />
+            </button>
+            <span className="text-xs text-muted ml-2">
+              {timelineAnchor.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} –{" "}
+              {new Date(timelineAnchor.getTime() + 6 * 86400000).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-7 gap-2">
+            {timelineDays.map((d, i) => {
+              const events = eventsOn(d);
+              const key = todayKey(d);
+              const isToday = key === todayK;
+              return (
+                <div
+                  key={key}
+                  className={cn(
+                    "bg-white rounded-2xl p-3 min-h-[300px] flex flex-col shadow-sm border border-transparent",
+                    isToday && "ring-2 ring-lime border-transparent bg-lime/5",
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] uppercase tracking-wider text-muted">{WEEKDAYS[i]}</div>
+                    <div
+                      className={cn(
+                        "text-sm font-bold w-7 h-7 rounded-full grid place-items-center",
+                        isToday && "bg-lime text-ink",
+                      )}
+                    >
+                      {d.getDate()}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5 overflow-y-auto flex-1">
+                    {events.length === 0 ? (
+                      <div className="text-[10px] text-muted italic text-center pt-4">vazio</div>
+                    ) : (
+                      events.map((ev) => (
+                        <div
+                          key={ev.id}
+                          className={cn(
+                            "text-left text-xs bg-surface-2 px-2 py-1.5 rounded-lg border border-transparent hover:border-ink/10 cursor-pointer",
+                            ev.kind === "appt" ? "border-info/20 bg-info/5" : "",
+                            ev.done && "opacity-50 line-through",
+                          )}
+                        >
+                          <div className={cn("font-semibold truncate", ev.kind === "appt" && "text-info")}>{ev.title}</div>
+                          <div className="flex items-center gap-1 mt-0.5 justify-between">
+                            <span className="text-[10px] text-muted flex items-center gap-0.5">
+                              <Clock size={9} />
+                              {ev.kind === "task" ? "tarefa" : (ev.type || "reuniao")}
+                            </span>
+                            {ev.kind === "appt" && (
+                              <button onClick={(e) => { e.stopPropagation(); removeAppt(ev.id); }} className="hover:text-danger transition">
+                                <Trash2 size={10} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {showAdd && <AddAppointmentModal onClose={() => setShowAdd(false)} defaultDate={selectedDate ?? undefined} />}
+      {showInbox && <AgendaInviteInbox onClose={() => setShowInbox(false)} />}
     </AppShell>
   );
 }

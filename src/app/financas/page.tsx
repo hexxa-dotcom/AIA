@@ -4,7 +4,7 @@ import {
   Plus, ChevronLeft, ChevronRight, Inbox, Sparkles, 
   TrendingUp, TrendingDown, DollarSign, PieChart, 
   ArrowUpRight, ArrowDownRight, Trash2, LineChart, Coins,
-  Award, Wallet, Home, Users, CreditCard, AlertCircle, FileText, Check, Pencil
+  Award, Wallet, Home, Users, CreditCard, AlertCircle, FileText, Check, Pencil, ScanText
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
@@ -12,9 +12,11 @@ import { Topbar } from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/Button";
 import { FinanceSummary } from "@/components/finance/FinanceSummary";
 import { ExpenseList, CartaoList } from "@/components/finance/ExpenseList";
+import { DebtsView } from "@/components/finance/DebtsView";
 import { ExpenseEditor } from "@/components/finance/ExpenseEditor";
 import { ExpenseInbox } from "@/components/finance/ExpenseInbox";
 import { CardStatementImporter } from "@/components/finance/CardStatementImporter";
+import { ManageCardsModal } from "@/components/finance/ManageCardsModal";
 import { useFinanceStore, isExpenseActiveInMonth } from "@/store/useFinanceStore";
 import { useInvestmentStore, type InvestmentAsset } from "@/store/useInvestmentStore";
 import { cn } from "@/lib/utils";
@@ -486,13 +488,15 @@ export default function FinancasPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [inbox, setInbox] = useState(false);
   const [importer, setImporter] = useState(false);
+  const [manageCards, setManageCards] = useState(false);
   const [imovelFilter, setImovelFilter] = useState<string>("");
   const [memberFilter, setMemberFilter] = useState<string>("");
 
-  const pendingCount = useFinanceStore((s) => s.pendingCount());
   const properties = useFinanceStore((s) => s.properties);
   const familyMembers = useFinanceStore((s) => s.familyMembers);
   const allExpenses = useFinanceStore((s) => s.expenses);
+  const creditCards = useFinanceStore((s) => s.creditCards);
+  const pendingCount = useFinanceStore((s) => s.pendingCount());
   
   const yearMonth = toYearMonth(year, month);
 
@@ -620,19 +624,6 @@ export default function FinancasPage() {
                 </span>
               )}
             </button>
-            <div className="bg-white rounded-full p-1 shadow-sm border border-flat flex items-center">
-              <button
-                onClick={() => {
-                  setEditId(null);
-                  setEditing(true);
-                }}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold text-ink hover:bg-surface-2 transition"
-              >
-                <Plus size={14} className="text-danger" strokeWidth={3} />
-                <span className="hidden sm:inline">Novo Lançamento</span>
-                <span className="sm:hidden">Novo</span>
-              </button>
-            </div>
           </div>
         }
       />
@@ -642,8 +633,9 @@ export default function FinancasPage() {
         {/* Summary */}
         {tab !== "investimentos" && <FinanceSummary yearMonth={yearMonth} />}
 
-        {/* Tab bar */}
-        <div className="flex flex-wrap gap-1 mb-4 bg-white rounded-full p-1.5 w-fit shadow-sm mt-2">
+        {/* Tab bar & Actions */}
+        <div className="flex items-center justify-between mb-4 mt-2 w-full">
+          <div className="flex flex-wrap gap-1 bg-white rounded-full p-1.5 w-fit shadow-sm">
           {TABS.map(({ id, label, emoji }) => (
             <button
               key={id}
@@ -658,6 +650,22 @@ export default function FinancasPage() {
               <span className="leading-tight text-center">{label}</span>
             </button>
           ))}
+          </div>
+          
+          {/* Lançar Button Outside Card */}
+          <div className="bg-white rounded-full p-1 shadow-sm border border-flat flex items-center shrink-0">
+            <button
+              onClick={() => {
+                setEditId(null);
+                setEditing(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold text-ink hover:bg-surface-2 transition"
+            >
+              <Plus size={14} className="text-danger" strokeWidth={3} />
+              <span className="hidden sm:inline">Novo Lançamento</span>
+              <span className="sm:hidden">Novo</span>
+            </button>
+          </div>
         </div>
 
         {/* Tab content */}
@@ -670,20 +678,30 @@ export default function FinancasPage() {
                 {TAB_META[tab].subtitle}
               </div>
             </div>
-            {/* cartões tab: importar fatura button */}
-            {tab === "cartoes" && (
-              <button
-                onClick={() => setImporter(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition hover:bg-surface-2"
-                style={{
-                  color: "#141414",
-                  border: "1px solid rgba(0,0,0,0.08)",
-                }}
-              >
-                <Sparkles size={12} className="text-ink/60" />
-                Importar fatura
-              </button>
-            )}
+            
+            <div className="flex items-center gap-2">
+              {/* cartões tab: importar fatura button */}
+              {tab === "cartoes" && (
+                <>
+                <button
+                  onClick={() => setManageCards(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition hover:bg-surface-2"
+                  style={{ color: "#141414", border: "1px solid rgba(0,0,0,0.08)" }}
+                >
+                  <CreditCard size={12} className="text-ink/60" />
+                  Gerenciar Cartões
+                </button>
+                <button
+                  onClick={() => setImporter(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition hover:bg-surface-2"
+                  style={{ color: "#141414", border: "1px solid rgba(0,0,0,0.08)" }}
+                >
+                  <ScanText size={12} className="text-info" />
+                  Importar Fatura
+                </button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Renderização unificada no padrão de 2 colunas baseado em Investimentos */}
@@ -763,15 +781,75 @@ export default function FinancasPage() {
                   </div>
                 )}
 
-                {/* Dívidas: warning warning panel */}
                 {tab === "dividas" && (
-                  <div className="p-4 bg-danger/10 border border-danger/20 rounded-2xl flex items-start gap-3">
-                    <AlertCircle size={18} className="text-danger shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="text-xs font-bold text-danger leading-tight mb-1">Atenção às Pendências</h3>
-                      <p className="text-[10px] text-danger/80 leading-relaxed">
-                        Gerencie suas parcelas de longo prazo ou contas atrasadas. É possível cadastrá-las na categoria Pessoal e fixá-las no calendário.
-                      </p>
+                  <DebtsView yearMonth={yearMonth} onEdit={openEdit} />
+                )}
+
+                {/* Cartões: Meus Cartões Cadastrados */}
+                {tab === "cartoes" && creditCards.length > 0 && (
+                  <div className="glass rounded-3xl p-5 border border-flat flex flex-col gap-3">
+                    <h3 className="font-bold text-xs uppercase tracking-wider text-muted flex items-center justify-between border-b border-flat pb-2">
+                      <span className="flex items-center gap-1.5"><CreditCard size={13} /> Meus Cartões</span>
+                    </h3>
+                    <div className="space-y-4">
+                      {creditCards.map(c => {
+                        // Limite Comprometido (todas as despesas vinculadas não pagas)
+                        const limitUsed = allExpenses
+                          .filter(e => e.isCartao && e.cartaoNome === c.name && !e.payments[yearMonth]) // aproximação (devemos melhorar)
+                          .reduce((a, e) => a + e.amount, 0);
+                        
+                        const limitPct = c.limit > 0 ? Math.min(100, Math.round((limitUsed / c.limit) * 100)) : 0;
+                        const available = c.limit - limitUsed;
+                        const isDanger = limitPct >= 80;
+
+                        // Próxima Fatura
+                        const nextMonthDate = new Date(year, month + 1, 1);
+                        const nextYearMonth = toYearMonth(nextMonthDate.getFullYear(), nextMonthDate.getMonth());
+                        const nextMonthFatura = allExpenses
+                          .filter(e => e.isCartao && e.cartaoNome === c.name && isExpenseActiveInMonth(e, nextYearMonth))
+                          .reduce((a, e) => a + e.amount, 0);
+
+                        // Melhor dia de compra
+                        const nowDay = now.getDate();
+                        const isBestDay = nowDay === c.closingDay + 1;
+                        
+                        return (
+                          <div key={c.id} className="space-y-1.5">
+                            <div className="flex justify-between items-end">
+                              <div>
+                                <p className="font-bold text-xs text-ink flex items-center gap-1.5">
+                                  <span className={cn("w-2 h-2 rounded-full", c.color || "bg-ink")} /> {c.name}
+                                </p>
+                                <p className="text-[10px] text-muted font-semibold mt-0.5">Fecha dia {c.closingDay} · Vence dia {c.dueDay}</p>
+                              </div>
+                              <div className="text-right flex items-center gap-4">
+                                <div className="text-right">
+                                  <p className="text-[10px] uppercase font-bold text-muted">Próx. Fatura</p>
+                                  <p className="font-bold text-sm text-ink">R$ {nextMonthFatura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                </div>
+                                <div className="text-right border-l border-flat pl-4">
+                                  <p className={cn("text-[10px] uppercase font-bold", isDanger ? "text-danger" : "text-muted")}>Disponível</p>
+                                  <p className={cn("font-bold text-sm", isDanger ? "text-danger" : "text-ink")}>R$ {available.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="h-2 w-full bg-surface-2 rounded-full overflow-hidden border border-flat">
+                              <div 
+                                className={cn("h-full rounded-full", isDanger ? "bg-danger" : c.color || "bg-ink")}
+                                style={{ width: `${limitPct}%` }}
+                              />
+                            </div>
+                            
+                            <div className="flex justify-between items-center text-[9px] font-bold">
+                              <span className={cn(isBestDay ? "text-success bg-success/10 px-1.5 py-0.5 rounded" : "text-muted")}>
+                                {isBestDay ? "⭐ Hoje é o melhor dia para compra!" : `Melhor dia: ${c.closingDay + 1}`}
+                              </span>
+                              <span className={isDanger ? "text-danger" : "text-muted"}>{limitPct}% usado de R$ {c.limit}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -780,23 +858,27 @@ export default function FinancasPage() {
                 {tab === "cartoes" && cardsDistribution.length > 0 && (
                   <div className="glass rounded-3xl p-5 border border-flat flex flex-col gap-3">
                     <h3 className="font-bold text-xs uppercase tracking-wider text-muted flex items-center gap-1.5 border-b border-flat pb-2">
-                      <CreditCard size={13} /> Gastos por Cartão
+                      <PieChart size={13} /> Distribuição Atual
                     </h3>
                     <div className="space-y-3.5">
-                      {cardsDistribution.map((item) => (
-                        <div key={item.cardName} className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-bold text-ink">
-                            <span>{item.cardName}</span>
-                            <span className="text-muted">R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ({item.pct}%)</span>
+                      {cardsDistribution.map((item, idx) => {
+                        const shades = ["bg-ink", "bg-ink/80", "bg-ink/60", "bg-ink/40", "bg-ink/20"];
+                        const colorClass = shades[idx % shades.length];
+                        return (
+                          <div key={item.cardName} className="space-y-1">
+                            <div className="flex justify-between text-[11px] font-bold text-ink">
+                              <span>{item.cardName}</span>
+                              <span className="text-muted">R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ({item.pct}%)</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden border border-flat">
+                              <div 
+                                className={`h-full rounded-full ${colorClass}`}
+                                style={{ width: `${item.pct}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden border border-flat">
-                            <div 
-                              className="h-full rounded-full bg-info"
-                              style={{ width: `${item.pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -831,20 +913,27 @@ export default function FinancasPage() {
                       <PieChart size={13} /> {tab === "entradas" ? "Distribuição de Receitas" : "Distribuição de Gastos"}
                     </h3>
                     <div className="space-y-3.5">
-                      {tabGroupDistribution.map((item) => (
-                        <div key={item.group} className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-bold text-ink">
-                            <span>{item.group}</span>
-                            <span className="text-muted">R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ({item.pct}%)</span>
+                      {tabGroupDistribution.map((item, idx) => {
+                        const colors = ["bg-ink", "bg-purple-500", "bg-info", "bg-warning", "bg-success", "bg-amber-500", "bg-lime"];
+                        const colorClass = colors[idx % colors.length];
+                        return (
+                          <div key={item.group} className="space-y-1">
+                            <div className="flex justify-between text-[11px] font-bold text-ink">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`w-2 h-2 rounded-full ${colorClass}`} />
+                                <span>{item.group}</span>
+                              </div>
+                              <span className="text-muted">R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ({item.pct}%)</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden border border-flat">
+                              <div 
+                                className={`h-full rounded-full ${colorClass}`}
+                                style={{ width: `${item.pct}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden border border-flat">
-                            <div 
-                              className="h-full rounded-full bg-ink"
-                              style={{ width: `${item.pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -887,9 +976,7 @@ export default function FinancasPage() {
                 {tab === "cartoes" && (
                   <CartaoList yearMonth={yearMonth} onEdit={openEdit} />
                 )}
-                {tab === "dividas" && (
-                  <ExpenseList category="personal" yearMonth={yearMonth} onEdit={openEdit} />
-                )}
+                {/* The DebtsView handles both the header and the list */}
               </div>
 
             </div>
@@ -917,6 +1004,7 @@ export default function FinancasPage() {
 
       <AnimatePresence>
         {inbox && <ExpenseInbox onClose={() => setInbox(false)} />}
+        {manageCards && <ManageCardsModal onClose={() => setManageCards(false)} />}
       </AnimatePresence>
     </AppShell>
   );

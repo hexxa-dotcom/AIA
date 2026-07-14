@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useAgendaStore, type AppointmentType } from "@/store/useAgendaStore";
+import { useAgendaInviteStore } from "@/store/useAgendaInviteStore";
 import { Button } from "@/components/ui/Button";
 
 const TYPES: { value: AppointmentType; label: string }[] = [
@@ -23,6 +24,8 @@ export function AddAppointmentModal({ onClose, defaultDate }: { onClose: () => v
   const [endTime, setEndTime] = useState("10:00");
   const [allDay, setAllDay] = useState(false);
   const [description, setDescription] = useState("");
+  const [attendeesInput, setAttendeesInput] = useState("");
+  const sendInvite = useAgendaInviteStore((s) => s.sendInvite);
 
   function save() {
     if (!title.trim() || !date) return;
@@ -31,7 +34,20 @@ export function AddAppointmentModal({ onClose, defaultDate }: { onClose: () => v
     const [eh, emin] = endTime.split(":").map(Number);
     const dateMs = new Date(y, m - 1, d, allDay ? 0 : h, allDay ? 0 : min).getTime();
     const endMs = new Date(y, m - 1, d, allDay ? 23 : eh, allDay ? 59 : emin).getTime();
-    add({ title: title.trim(), date: dateMs, endDate: endMs, type, description, allDay });
+    
+    const attendees = attendeesInput.split(",").map(e => e.trim()).filter(Boolean);
+    const appt = { title: title.trim(), date: dateMs, endDate: endMs, type, description, allDay, attendees };
+    
+    add(appt);
+
+    attendees.forEach(email => {
+      sendInvite({
+        appointment: appt,
+        fromEmail: "filipe@aia.com",
+        toEmail: email
+      });
+    });
+
     onClose();
   }
 
@@ -105,6 +121,16 @@ export function AddAppointmentModal({ onClose, defaultDate }: { onClose: () => v
             rows={2}
             className="w-full px-4 py-3 rounded-2xl bg-surface-2 text-sm resize-none outline-none focus:ring-2 focus:ring-ink/15"
           />
+
+          <div>
+            <label className="text-[10px] uppercase tracking-wider font-semibold text-muted block mb-1">Convidados (Opcional)</label>
+            <input
+              value={attendeesInput}
+              onChange={(e) => setAttendeesInput(e.target.value)}
+              placeholder="e-mails separados por vírgula"
+              className="w-full px-4 py-3 rounded-2xl bg-surface-2 text-sm font-medium outline-none focus:ring-2 focus:ring-ink/15"
+            />
+          </div>
         </div>
 
         <div className="flex gap-2 p-5 pt-0">

@@ -49,29 +49,29 @@ export function ReminderConfig({ taskId, dueDate }: { taskId: string; dueDate?: 
   }
 
   return (
-    <div className="bg-surface-2 rounded-2xl p-3">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] uppercase tracking-wider font-semibold text-muted flex items-center gap-1">
-          <Bell size={11} />
+    <div className="flex flex-col gap-1.5 border-b border-ink/5 pb-3 last:border-0 mt-3">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider font-bold text-muted">
+        <span className="flex items-center gap-1.5">
+          <Bell size={13} />
           Lembretes
         </span>
         {permission !== "granted" && (
           <button
             onClick={requestPerm}
-            className="text-[10px] bg-warning/15 text-warning px-2 py-0.5 rounded-full"
+            className="text-[9px] bg-warning/15 text-warning px-1.5 py-0.5 rounded"
           >
-            ativar notificações
+            ativar
           </button>
         )}
       </div>
 
-      <div className="flex gap-1 flex-wrap mb-2">
+      <div className="flex gap-1 flex-wrap mb-1.5">
         {(["browser", "email", "both"] as const).map((c) => (
           <button
             key={c}
             onClick={() => setChannel(c)}
-            className={`text-[10px] px-2 py-0.5 rounded-full ${
-              channel === c ? "bg-ink text-lime" : "bg-white"
+            className={`text-[9px] px-2 py-0.5 rounded ${
+              channel === c ? "bg-ink text-lime" : "bg-surface-2/50 border border-ink/5"
             }`}
           >
             {c === "browser" ? "navegador" : c === "email" ? "email" : "ambos"}
@@ -80,12 +80,12 @@ export function ReminderConfig({ taskId, dueDate }: { taskId: string; dueDate?: 
       </div>
 
       {dueDate && (
-        <div className="flex gap-1 flex-wrap mb-2">
+        <div className="flex gap-1 flex-wrap mb-1.5">
           {PRESETS.map((p) => (
             <button
               key={p.minutes}
               onClick={() => addAtMinutesBefore(p.minutes)}
-              className="text-[11px] bg-white hover:bg-black/5 px-2 py-1 rounded-lg"
+              className="text-[9px] font-semibold bg-surface-2/50 border border-ink/5 hover:bg-surface-2 px-1.5 py-0.5 rounded transition"
             >
               + {p.label}
             </button>
@@ -98,19 +98,19 @@ export function ReminderConfig({ taskId, dueDate }: { taskId: string; dueDate?: 
           type="datetime-local"
           value={customWhen}
           onChange={(e) => setCustomWhen(e.target.value)}
-          className="flex-1 text-xs bg-white rounded-lg px-2 py-1 border border-ink/10 outline-none focus:border-ink"
+          className="flex-1 text-[10px] bg-surface-2/50 rounded-lg px-2 py-1 border border-ink/5 outline-none focus:border-ink/20"
         />
         <button
           onClick={addCustom}
           disabled={!customWhen}
           className="px-2 rounded-lg bg-ink text-lime text-xs disabled:opacity-50"
         >
-          <Plus size={12} />
+          <Plus size={10} />
         </button>
       </div>
 
       {items.length === 0 ? (
-        <p className="text-[11px] text-muted italic">Nenhum lembrete configurado</p>
+        <p className="text-[10px] text-muted italic">Nenhum lembrete configurado</p>
       ) : (
         <ul className="space-y-1">
           {items.map((r) => {
@@ -119,19 +119,19 @@ export function ReminderConfig({ taskId, dueDate }: { taskId: string; dueDate?: 
             return (
               <li
                 key={r.id}
-                className={`flex items-center gap-2 text-xs bg-white rounded-lg px-2 py-1 ${sent ? "opacity-50" : ""}`}
+                className={`flex items-center gap-1.5 text-[10px] bg-surface-2/50 border border-ink/5 rounded-lg px-2 py-1 ${sent ? "opacity-50" : ""}`}
               >
-                <BellRing size={11} className={sent ? "text-muted" : "text-warning"} />
-                <span className="flex-1">
+                <BellRing size={10} className={sent ? "text-muted" : "text-warning"} />
+                <span className="flex-1 font-semibold">
                   {date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
-                  <span className="text-[10px] text-muted ml-1">
-                    ({r.channel === "browser" ? "navegador" : r.channel === "email" ? "email" : "ambos"})
+                  <span className="text-[8px] text-muted ml-1 uppercase">
+                    ({r.channel === "browser" ? "nav" : r.channel === "email" ? "email" : "ambos"})
                   </span>
                 </span>
-                {sent && <span className="text-[10px] text-success">enviado</span>}
+                {sent && <span className="text-[9px] text-success font-bold uppercase tracking-widest">env</span>}
                 <button
                   onClick={() => remove(r.id)}
-                  className="p-0.5 hover:bg-danger/10 hover:text-danger rounded"
+                  className="p-1 hover:bg-danger/10 hover:text-danger rounded transition"
                 >
                   <Trash2 size={10} />
                 </button>

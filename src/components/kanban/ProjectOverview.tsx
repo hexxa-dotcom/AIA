@@ -2,29 +2,37 @@
 import { useState, useEffect } from "react";
 import { useTaskStore } from "@/store/useTaskStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { Target, Focus, ListTodo, Users, ShieldAlert, Share2, Crown } from "lucide-react";
+import { formatDuration } from "@/lib/utils";
+import { Target, Focus, ListTodo, Users, ShieldAlert, Share2, Crown, Trash2, LayoutGrid, AlertTriangle, Clock, DollarSign } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 
 interface Props {
   onShare: () => void;
-  onStart: () => void;
+  onStart?: () => void; // kept for backwards compatibility if needed
 }
 
-export function ProjectOverview({ onShare, onStart }: Props) {
+export function ProjectOverview({ onShare }: Props) {
   const activeBoardId = useTaskStore((s) => s.activeBoardId);
   const board = useTaskStore((s) => s.boards.find((b) => b.id === activeBoardId));
   const updateBoard = useTaskStore((s) => s.updateBoard);
+  const deleteBoard = useTaskStore((s) => s.deleteBoard);
   const meEmail = useAuthStore((s) => s.user?.email) || "usuario@aia.com";
 
+  const [name, setName] = useState(board?.name || "");
+  const [emoji, setEmoji] = useState(board?.emoji || "📁");
   const [scope, setScope] = useState(board?.scope || "");
   const [okrs, setOkrs] = useState(board?.okrs || "");
   const [kpis, setKpis] = useState(board?.kpis || "");
+  const [budget, setBudget] = useState(board?.budget || 0);
 
   useEffect(() => {
     if (board) {
+      setName(board.name || "");
+      setEmoji(board.emoji || "📁");
       setScope(board.scope || "");
       setOkrs(board.okrs || "");
       setKpis(board.kpis || "");
+      setBudget(board.budget || 0);
     }
   }, [board?.id]);
 
@@ -35,7 +43,21 @@ export function ProjectOverview({ onShare, onStart }: Props) {
 
   function handleSave() {
     if (!board || isViewer) return;
-    updateBoard(board.id, { scope, okrs, kpis });
+    updateBoard(board.id, { name, emoji, scope, okrs, kpis, budget });
+  }
+
+  const projectTasks = useTaskStore.getState().tasks.filter((t) => t.boardId === board?.id);
+  const totalTimeSpent = projectTasks.reduce((acc, t) => acc + (t.totalTimeSec || 0), 0);
+  const totalCost = projectTasks.reduce((acc, t) => {
+    const hours = (t.totalTimeSec || 0) / 3600;
+    return acc + hours * (t.hourlyRate || 0);
+  }, 0);
+
+  function handleDelete() {
+    if (!board || isViewer) return;
+    if (confirm("Tem certeza que deseja excluir este projeto e todas as suas tarefas? Esta ação é irreversível.")) {
+      deleteBoard(board.id);
+    }
   }
 
   return (
@@ -43,6 +65,39 @@ export function ProjectOverview({ onShare, onStart }: Props) {
       {/* Coluna Principal: Definições do Projeto */}
       <div className="lg:col-span-2 flex flex-col gap-4">
         
+        {/* Identificação */}
+        <div className="glass rounded-3xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-ink/10 text-ink grid place-items-center">
+              <LayoutGrid size={16} />
+            </div>
+            <h3 className="font-bold text-ink text-lg">Identificação</h3>
+          </div>
+          <div className="flex gap-3">
+            <div className="w-16">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 block">Ícone</label>
+              <input
+                value={emoji}
+                onChange={(e) => setEmoji(e.target.value)}
+                onBlur={handleSave}
+                disabled={isViewer}
+                className="w-full text-2xl bg-transparent border-b border-ink/10 outline-none text-center pb-1 disabled:opacity-50"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 block">Nome do Projeto</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={handleSave}
+                disabled={isViewer}
+                placeholder="Ex: Novo Aplicativo Mobile"
+                className="w-full text-base font-semibold bg-transparent border-b border-ink/10 outline-none pb-1 disabled:opacity-50 focus:border-ink/30 transition"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Escopo */}
         <div className="glass rounded-3xl p-5">
           <div className="flex items-center gap-2 mb-4">
@@ -106,21 +161,53 @@ export function ProjectOverview({ onShare, onStart }: Props) {
           )}
         </div>
         
-        {/* Botão de Iniciar */}
-        {!isViewer && (
-          <div className="flex justify-end mt-2">
-            <button
-              onClick={onStart}
-              className="px-6 py-3 bg-ink text-surface rounded-xl font-bold hover:bg-black/80 transition shadow-sm"
-            >
-              Salvar e Iniciar Projeto →
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Coluna Lateral: Equipe e Compartilhamento */}
+      {/* Coluna Lateral: Métricas, Equipe e Danger Zone */}
       <div className="flex flex-col gap-4">
+
+        {/* Métricas do Projeto */}
+        <div className="glass rounded-3xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-lime/10 text-lime-dark grid place-items-center">
+              <Clock size={16} />
+            </div>
+            <h3 className="font-bold text-ink text-lg">Métricas e Custos</h3>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted block">Orçamento (Budget)</label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-muted">R$</span>
+                <input
+                  type="number"
+                  value={budget || ""}
+                  onChange={(e) => setBudget(parseFloat(e.target.value) || 0)}
+                  onBlur={handleSave}
+                  disabled={isViewer}
+                  placeholder="0,00"
+                  className="w-full text-lg font-bold bg-transparent border-b border-ink/10 outline-none pb-1 disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-ink/5">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">Tempo Total</span>
+                <span className="text-base font-bold text-ink tabular-nums">{formatDuration(totalTimeSpent)}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">Custo Total</span>
+                <span className="text-base font-bold text-ink tabular-nums">
+                  {totalCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Equipe */}
         <div className="glass rounded-3xl overflow-hidden flex flex-col">
           <div className="p-5 border-b bg-black/[0.02] flex items-center justify-between" style={{ borderColor: "var(--flat-border)" }}>
             <div className="flex items-center gap-2">
@@ -139,7 +226,7 @@ export function ProjectOverview({ onShare, onStart }: Props) {
           </div>
           
           <div className="p-5 flex-1 flex flex-col gap-4">
-            {/* Owner (Se não for foreign, é o current user) */}
+            {/* Owner */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-ink/10 text-ink grid place-items-center font-bold text-xs">
@@ -179,6 +266,27 @@ export function ProjectOverview({ onShare, onStart }: Props) {
             )}
           </div>
         </div>
+
+        {/* Danger Zone */}
+        {!isViewer && (
+          <div className="glass rounded-3xl p-5 border border-danger/20 bg-danger/5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle size={16} className="text-danger" />
+              <h3 className="font-bold text-danger">Zona de Perigo</h3>
+            </div>
+            <p className="text-xs text-danger/80 mb-4">
+              A exclusão do projeto removerá todas as tarefas, configurações e tempo registrado permanentemente.
+            </p>
+            <button
+              onClick={handleDelete}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-danger text-white rounded-xl text-sm font-bold hover:bg-danger/90 transition shadow-sm"
+            >
+              <Trash2 size={16} />
+              Excluir Projeto
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );

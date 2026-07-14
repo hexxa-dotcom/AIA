@@ -11,6 +11,7 @@ export interface Appointment {
   type: AppointmentType;
   description?: string;
   allDay?: boolean;
+  attendees?: string[];
 }
 
 interface State {

@@ -2,9 +2,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { genId as nanoid } from "@/lib/id";
-
 export type ExpenseCategory = "personal" | "casa" | "familia";
 export type ExpenseTipo = "recorrente" | "parcela" | "unico";
+
+export interface CreditCard {
+  id: string;
+  name: string;
+  limit: number;
+  closingDay: number;
+  dueDay: number;
+  color?: string;
+}
 
 export interface RecurringExpense {
   id: string;
@@ -57,6 +65,7 @@ interface State {
   sentInvites: ExpenseInvite[];
   properties: string[];
   familyMembers: string[];
+  creditCards: CreditCard[];
   hydrated: boolean;
 }
 
@@ -76,7 +85,12 @@ interface Actions {
   receiveInvite: (invite: ExpenseInvite) => void;
   acceptInvite: (inviteId: string) => void;
   rejectInvite: (inviteId: string) => void;
+  // credit cards
+  addCreditCard: (card: Omit<CreditCard, "id">) => void;
+  updateCreditCard: (id: string, patch: Partial<CreditCard>) => void;
+  removeCreditCard: (id: string) => void;
   pendingCount: () => number;
+  
   setHydrated: (h: boolean) => void;
 }
 
@@ -88,6 +102,7 @@ export const useFinanceStore = create<State & Actions>()(
       sentInvites: [],
       properties: ["Casa Principal"],
       familyMembers: [],
+      creditCards: [],
       hydrated: false,
 
       add: (input) => {
@@ -181,6 +196,15 @@ export const useFinanceStore = create<State & Actions>()(
         })),
 
       pendingCount: () => get().invites.filter((i) => i.status === "pending").length,
+
+      addCreditCard: (card) => 
+        set((s) => ({ creditCards: [...s.creditCards, { ...card, id: nanoid() }] })),
+
+      updateCreditCard: (id, patch) =>
+        set((s) => ({ creditCards: s.creditCards.map(c => c.id === id ? { ...c, ...patch } : c) })),
+
+      removeCreditCard: (id) =>
+        set((s) => ({ creditCards: s.creditCards.filter(c => c.id !== id) })),
 
       setHydrated: (h) => set({ hydrated: h }),
     }),

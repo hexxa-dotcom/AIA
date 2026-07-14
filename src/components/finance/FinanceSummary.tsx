@@ -91,6 +91,10 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
     .filter((e) => e.tipo === "recorrente")
     .reduce((a, e) => a + e.amount, 0);
 
+  const despesasNaoRecorrentes = despesasExpenses
+    .filter((e) => e.tipo === "unico" || e.tipo === "parcela")
+    .reduce((a, e) => a + e.amount, 0);
+
   const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
   const highestCat = catEntries[0] && catEntries[0][1] > 0 ? catEntries[0] : null;
   const highestCatLabel = highestCat ? CATS.find((c) => c.key === highestCat[0])?.label : "Nenhuma";
@@ -179,12 +183,12 @@ export function FinanceSummary({ yearMonth }: { yearMonth: string }) {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
-                  <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Custo de Vida</p>
+                  <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Custo de Vida (Fixas)</p>
                   <p className="text-sm font-bold text-white mt-0.5">{fmtShort(custoVida)}</p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
-                  <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Maior Gasto</p>
-                  <p className="text-sm font-bold text-white mt-0.5 truncate">{highestCatLabel}</p>
+                  <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Não Recorrentes</p>
+                  <p className="text-sm font-bold text-white mt-0.5">{fmtShort(despesasNaoRecorrentes)}</p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-2 px-3 rounded-xl">
                   <p className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Entradas (Mês)</p>

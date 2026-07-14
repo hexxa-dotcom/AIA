@@ -8,30 +8,12 @@ import { Button } from "@/components/ui/Button";
 import { Plus, Link2, FileText, FolderOpen, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotesTabContent } from "@/app/notas/page";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { DriveExplorer } from "@/components/tools/DriveExplorer";
 
 type Tab = "links" | "arquivos" | "documentos" | "notas";
 
-function DrivePlaceholder({ title, description }: { title: string, description: string }) {
-  return (
-    <div className="bg-white rounded-3xl p-8 text-center space-y-4">
-      <div className="w-14 h-14 rounded-2xl bg-ink/5 grid place-items-center mx-auto">
-        <FolderOpen size={24} className="text-ink/40" />
-      </div>
-      <div>
-        <p className="font-bold text-base text-ink">{title}</p>
-        <p className="text-xs text-muted mt-1.5 leading-relaxed max-w-xs mx-auto">
-          {description}
-        </p>
-      </div>
-      <button
-        disabled
-        className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-ink/5 text-ink/40 text-sm font-bold cursor-not-allowed"
-      >
-        Em breve: Integração com Google Drive
-      </button>
-    </div>
-  );
-}
+const CLIENT_ID = "769838139065-v9qfodfu6aaipb8ghk32oppsicd27jtn.apps.googleusercontent.com";
 
 export default function DocsPage() {
   const [tab, setTab] = useState<Tab>("links");
@@ -46,8 +28,9 @@ export default function DocsPage() {
   ];
 
   return (
-    <AppShell>
-      <Topbar title="Docs" subtitle="Links, arquivos, documentos e notas rápidas do sistema" />
+    <GoogleOAuthProvider clientId={CLIENT_ID}>
+      <AppShell>
+        <Topbar title="Docs" subtitle="Links, arquivos, documentos e notas rápidas do sistema" />
 
       <div className="flex gap-1 mb-4 bg-white rounded-full p-1.5 w-fit">
         {tabs.map(({ id, label, Icon }) => (
@@ -73,17 +56,11 @@ export default function DocsPage() {
       )}
 
       {tab === "arquivos" && (
-        <DrivePlaceholder 
-          title="Meus Arquivos" 
-          description="Aqui você poderá visualizar e gerenciar todos os seus arquivos sincronizados diretamente com o seu Google Drive." 
-        />
+        <DriveExplorer />
       )}
 
       {tab === "documentos" && (
-        <DrivePlaceholder 
-          title="Meus Documentos" 
-          description="Acesse facilmente suas planilhas, apresentações e textos do Google Docs integrados no AIA OS." 
-        />
+        <DriveExplorer />
       )}
 
       {tab === "notas" && (
@@ -91,6 +68,7 @@ export default function DocsPage() {
           <NotesTabContent />
         </div>
       )}
-    </AppShell>
+      </AppShell>
+    </GoogleOAuthProvider>
   );
 }

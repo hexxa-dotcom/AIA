@@ -11,6 +11,9 @@ import {
   Plus,
   UserPlus,
   AlertCircle,
+  User,
+  Home,
+  Users,
 } from "lucide-react";
 import {
   useFinanceStore,
@@ -29,6 +32,7 @@ const GROUPS: Record<ExpenseCategory, string[]> = {
     "Educação",
     "Transporte",
     "Vestuário",
+    "Dívida",
     "Outros",
   ],
   casa: ["Moradia", "Contas da Casa", "Manutenção", "Outros"],
@@ -61,10 +65,10 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   familia: "Compartilhadas",
 };
 
-const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
-  personal: "👤",
-  casa: "🏠",
-  familia: "👥",
+const CATEGORY_ICONS: Record<ExpenseCategory, React.ElementType> = {
+  personal: User,
+  casa: Home,
+  familia: Users,
 };
 
 const LBL =
@@ -87,6 +91,7 @@ export function ExpenseEditor({
   const familyMembers = useFinanceStore((s) => s.familyMembers);
   const addProperty = useFinanceStore((s) => s.addProperty);
   const addFamilyMember = useFinanceStore((s) => s.addFamilyMember);
+  const creditCards = useFinanceStore((s) => s.creditCards);
   const user = useAuthStore((s) => s.user);
 
   const existing = id ? expenses.find((e) => e.id === id) : null;
@@ -100,7 +105,14 @@ export function ExpenseEditor({
   const [category, setCategory] = useState<ExpenseCategory>(
     existing?.category ?? "personal",
   );
-  const [group, setGroup] = useState(existing?.group ?? "");
+  const isCustomInit = existing && id 
+    ? (existing.isIncome ? !INCOMING_GROUPS.includes(existing.group) 
+       : existing.isInvestimento ? !INVESTMENT_GROUPS.includes(existing.group) 
+       : !GROUPS[existing.category || "personal"].includes(existing.group))
+    : false;
+
+  const [group, setGroup] = useState(isCustomInit ? "Outros" : (existing?.group ?? ""));
+  const [customGroup, setCustomGroup] = useState(isCustomInit ? (existing?.group ?? "") : "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [formaPagamento, setFormaPagamento] = useState<"Dinheiro" | "Pix" | "Débito Automático" | "Cartão de Crédito" | "">(existing?.formaPagamento ?? "");
   const [isActive, setIsActive] = useState(existing?.isActive ?? true);
@@ -132,15 +144,15 @@ export function ExpenseEditor({
 
   useEffect(() => {
     if (tipoLancamento === "receita") {
-      if (!INCOMING_GROUPS.includes(group)) {
+      if (!INCOMING_GROUPS.includes(group) && group !== "Outros") {
         setGroup(INCOMING_GROUPS[0]);
       }
     } else if (tipoLancamento === "investimento") {
-      if (!INVESTMENT_GROUPS.includes(group)) {
+      if (!INVESTMENT_GROUPS.includes(group) && group !== "Outros") {
         setGroup(INVESTMENT_GROUPS[0]);
       }
     } else {
-      if (!group || !groups.includes(group)) setGroup(groups[0]);
+      if ((!group || !groups.includes(group)) && group !== "Outros") setGroup(groups[0]);
     }
   }, [tipoLancamento, category]);
 
@@ -207,9 +219,9 @@ export function ExpenseEditor({
       amount: parsed,
       dueDay: Math.min(31, Math.max(1, parseInt(dueDay) || 1)),
       category: tipoLancamento === "despesa" ? category : "personal",
-      group: tipoLancamento === "despesa"
-        ? (group || groups[0])
-        : (group || (tipoLancamento === "receita" ? INCOMING_GROUPS[0] : INVESTMENT_GROUPS[0])),
+      group: group === "Outros" && customGroup.trim() 
+        ? customGroup.trim() 
+        : (group || (tipoLancamento === "despesa" ? groups[0] : tipoLancamento === "receita" ? INCOMING_GROUPS[0] : INVESTMENT_GROUPS[0])),
       notes: notes.trim() || undefined,
       isActive,
       tipo,
@@ -323,20 +335,23 @@ export function ExpenseEditor({
               <span className={LBL}>Categoria</span>
               <div className="grid grid-cols-3 gap-2">
                 {(["personal", "casa", "familia"] as ExpenseCategory[]).map(
-                  (c) => (
-                    <button
-                      key={c}
-                      onClick={() => setCategory(c)}
-                      className={`flex flex-col items-center gap-1 py-3 rounded-2xl text-xs font-bold transition border border-flat ${
-                        category === c
-                          ? "bg-ink text-lime"
-                          : "bg-surface-2 text-ink hover:bg-ink/10"
-                      }`}
-                    >
-                      <span className="text-sm">{CATEGORY_ICONS[c]}</span>
-                      {CATEGORY_LABELS[c]}
-                    </button>
-                  ),
+                  (c) => {
+                    const Icon = CATEGORY_ICONS[c];
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => setCategory(c)}
+                        className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl text-xs font-bold transition border border-flat ${
+                          category === c
+                            ? "bg-ink text-lime"
+                            : "bg-surface-2 text-ink hover:bg-ink/10"
+                        }`}
+                      >
+                        <Icon size={16} className={category === c ? "text-lime" : "text-ink/60"} />
+                        {CATEGORY_LABELS[c]}
+                      </button>
+                    );
+                  }
                 )}
               </div>
             </div>
@@ -599,27 +614,33 @@ export function ExpenseEditor({
                   ? "Categoria da Entrada" 
                   : "Tipo de Investimento"}
             </span>
-            <select
-              value={group}
-              onChange={(e) => setGroup(e.target.value)}
-              className={INP}
-            >
-              {tipoLancamento === "despesa" && groups.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-              {tipoLancamento === "receita" && INCOMING_GROUPS.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-              {tipoLancamento === "investimento" && INVESTMENT_GROUPS.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={group}
+                onChange={(e) => setGroup(e.target.value)}
+                className={INP + (group === "Outros" ? " w-1/2" : " w-full")}
+              >
+                {tipoLancamento === "despesa" && groups.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+                {tipoLancamento === "receita" && INCOMING_GROUPS.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+                {tipoLancamento === "investimento" && INVESTMENT_GROUPS.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+                <option value="Outros">Outra...</option>
+              </select>
+              {group === "Outros" && (
+                <input
+                  autoFocus
+                  placeholder="Nome da categoria"
+                  value={customGroup}
+                  onChange={(e) => setCustomGroup(e.target.value)}
+                  className={INP + " flex-1"}
+                />
+              )}
+            </div>
           </div>
 
           {/* Forma de Pagamento */}
@@ -650,13 +671,29 @@ export function ExpenseEditor({
           {/* Cartão Nome (Apenas Despesas c/ Cartão de Crédito) */}
           {tipoLancamento === "despesa" && formaPagamento === "Cartão de Crédito" && (
             <div>
-              <span className={LBL}>Qual Cartão? (Opcional)</span>
-              <input
+              <span className={LBL}>Qual Cartão?</span>
+              <select
                 value={cartaoNome}
-                onChange={(e) => setCartaoNome(e.target.value)}
-                placeholder="Nome do cartão (ex: Nubank, Inter…)"
+                onChange={(e) => {
+                  const sel = e.target.value;
+                  setCartaoNome(sel);
+                  const card = creditCards.find(c => c.name === sel);
+                  if (card) {
+                    setDueDay(String(card.dueDay));
+                  }
+                }}
                 className={INP}
-              />
+              >
+                <option value="">Selecione um cartão...</option>
+                {creditCards.map(c => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+              {creditCards.length === 0 && (
+                <p className="text-[10px] text-danger mt-1 font-semibold flex items-center gap-1">
+                  <AlertCircle size={10} /> Você não tem cartões cadastrados. Vá na aba "Cartões" para gerenciar.
+                </p>
+              )}
             </div>
           )}
 

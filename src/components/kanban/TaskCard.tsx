@@ -28,9 +28,9 @@ export function TaskCard({ task, onOpen }: { task: Task; onOpen: (id: string) =>
       }}
       layout
       className={cn(
-        "group relative glass task-card rounded-2xl p-3 cursor-pointer select-none transition",
-        isDragging && "dragging",
-        task.column === "done" && "opacity-60",
+        "group relative bg-surface-2 rounded-2xl p-4 cursor-pointer select-none transition border border-ink/5 shadow-sm hover:shadow-md hover:border-ink/10",
+        isDragging && "dragging shadow-xl scale-105 opacity-80",
+        task.column === "done" && "opacity-60 bg-transparent border-transparent",
       )}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-no-open]")) return;

@@ -25,56 +25,51 @@ export function TaskTimer({ taskId }: { taskId: string }) {
   const live = isActive ? useTimerStore.getState().elapsedSec() : 0;
 
   return (
-    <div className="bg-surface-2 rounded-2xl p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs uppercase tracking-wider font-semibold text-muted flex items-center gap-1">
-          <Timer size={12} />
-          Cronômetro
-        </span>
-        <span className="text-[11px] text-muted">
-          Total: <strong className="text-ink">{formatDuration(task.totalTimeSec)}</strong>
-        </span>
+    <div className="flex flex-col gap-1.5 border-b border-ink/5 pb-3 last:border-0">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider font-bold text-muted">
+        <span className="flex items-center gap-1.5"><Timer size={13} /> Cronômetro</span>
+        <span className="opacity-70">{formatDuration(task.totalTimeSec)}</span>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="font-mono text-2xl sm:text-3xl font-bold tabular-nums">
+      <div className="flex items-center justify-between bg-surface-2/50 border border-ink/5 rounded-lg px-2 py-1.5">
+        <div className="font-mono text-sm font-bold tabular-nums">
           {isActive ? formatStopwatch(live) : "00:00:00"}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1">
           {!isActive && (
             <button
               onClick={() => start(taskId)}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-full bg-ink text-lime font-semibold text-xs sm:text-sm hover:scale-105 transition whitespace-nowrap"
+              title="Iniciar"
+              className="p-1.5 rounded bg-ink text-lime hover:scale-105 transition"
             >
-              <Play size={12} fill="currentColor" className="sm:w-[14px] sm:h-[14px]" />
-              Iniciar
+              <Play size={12} fill="currentColor" />
             </button>
           )}
           {isActive && active?.paused && (
             <button
               onClick={resume}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-full bg-lime text-ink font-semibold text-xs sm:text-sm hover:scale-105 transition whitespace-nowrap"
+              title="Continuar"
+              className="p-1.5 rounded bg-lime text-ink hover:scale-105 transition"
             >
-              <Play size={12} fill="currentColor" className="sm:w-[14px] sm:h-[14px]" />
-              Continuar
+              <Play size={12} fill="currentColor" />
             </button>
           )}
           {isActive && !active?.paused && (
             <button
               onClick={pause}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-full bg-white text-ink font-semibold text-xs sm:text-sm border border-ink/10 hover:bg-surface-2 transition whitespace-nowrap"
+              title="Pausar"
+              className="p-1.5 rounded bg-white text-ink border border-ink/10 hover:bg-surface-2 transition"
             >
-              <Pause size={12} className="sm:w-[14px] sm:h-[14px]" />
-              Pausar
+              <Pause size={12} />
             </button>
           )}
           {isActive && (
             <button
               onClick={() => stop()}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-full bg-danger text-white font-semibold text-xs sm:text-sm hover:opacity-90 transition whitespace-nowrap"
+              title="Parar"
+              className="p-1.5 rounded bg-danger text-white hover:opacity-90 transition"
             >
-              <Square size={12} fill="currentColor" className="sm:w-[14px] sm:h-[14px]" />
-              Parar
+              <Square size={12} fill="currentColor" />
             </button>
           )}
         </div>

@@ -96,13 +96,12 @@ export function FocusView({ taskId }: { taskId: string }) {
               </div>
               <h1 className="text-3xl font-bold leading-tight">{task.title}</h1>
             </div>
-            <Link
-              href="/projetos"
+            <button
               onClick={() => setFocused(undefined)}
-              className="flex items-center gap-1 text-xs text-muted hover:text-ink"
+              className="flex items-center gap-1 text-xs text-muted hover:text-ink bg-transparent"
             >
               <ArrowLeft size={12} /> voltar
-            </Link>
+            </button>
           </div>
 
           {task.description && (

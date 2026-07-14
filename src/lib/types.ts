@@ -91,6 +91,8 @@ export interface Board {
   scope?: string;
   okrs?: string;
   kpis?: string;
+  budget?: number;
+  columns?: Partial<Record<ColumnKey, string>>;
   createdAt: number;
   collaborators?: BoardCollaborator[];
   sharedBy?: string;

@@ -36,6 +36,7 @@ export function ExpenseList({
   includeShared,
   isIncomeOnly,
   isInvestimentoOnly,
+  groupFilter,
 }: {
   category?: ExpenseCategory;
   yearMonth: string;
@@ -45,6 +46,7 @@ export function ExpenseList({
   includeShared?: boolean;
   isIncomeOnly?: boolean;
   isInvestimentoOnly?: boolean;
+  groupFilter?: string;
 }) {
   const all = useFinanceStore((s) => s.expenses);
   const togglePaid = useFinanceStore((s) => s.togglePaid);
@@ -56,7 +58,9 @@ export function ExpenseList({
     if (isInvestimentoOnly) return e.isInvestimento;
     if (e.isIncome || e.isInvestimento) return false;
     if (includeShared && e.sharedBy) return true;
-    return e.category === category;
+    if (groupFilter && e.group !== groupFilter) return false;
+    if (category && e.category !== category) return false;
+    return true;
   });
 
   if (imovelFilter) {
@@ -237,7 +241,7 @@ const CAT_LABEL: Record<ExpenseCategory, string> = {
   familia: "Compartilhadas",
 };
 
-function ExpenseRow({
+export function ExpenseRow({
   expense,
   yearMonth,
   onEdit,

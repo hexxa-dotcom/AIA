@@ -14,13 +14,15 @@ export function DialogContent({
 }: {
   children: React.ReactNode;
   className?: string;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
 }) {
   const sizes = {
     sm: "sm:max-w-md",
     md: "sm:max-w-xl",
     lg: "sm:max-w-3xl",
     xl: "sm:max-w-5xl",
+    "2xl": "sm:max-w-6xl",
+    "3xl": "sm:max-w-7xl",
   };
   return (
     <DialogPrimitive.Portal>

@@ -20,8 +20,31 @@ export function Column({ column, tasks, onOpen, isViewer }: { column: ColumnKey;
   const meta = META[column];
   const { setNodeRef, isOver } = useDroppable({ id: `col:${column}` });
   const createTask = useTaskStore((s) => s.createTask);
+  const activeBoard = useTaskStore((s) => s.boards.find((b) => b.id === s.activeBoardId));
+  const updateBoard = useTaskStore((s) => s.updateBoard);
+  
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
+  
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const displayTitle = activeBoard?.columns?.[column] || meta.title;
+  const [editTitle, setEditTitle] = useState(displayTitle);
+
+  function commitTitle() {
+    if (!editTitle.trim()) {
+      setIsEditingTitle(false);
+      return;
+    }
+    if (activeBoard && editTitle.trim() !== displayTitle) {
+      updateBoard(activeBoard.id, {
+        columns: {
+          ...(activeBoard.columns || {}),
+          [column]: editTitle.trim(),
+        },
+      });
+    }
+    setIsEditingTitle(false);
+  }
 
   function commitAdd() {
     if (!title.trim()) {
@@ -40,7 +63,30 @@ export function Column({ column, tasks, onOpen, isViewer }: { column: ColumnKey;
         <div>
           <div className="flex items-center gap-2">
             <span className={cn("w-2 h-2 rounded-full", meta.tone.replace("bg-", "bg-").split(" ")[0])} />
-            <h2 className="font-bold text-sm">{meta.title}</h2>
+            
+            {isEditingTitle && !isViewer ? (
+              <input
+                autoFocus
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={(e) => e.key === "Enter" && commitTitle()}
+                className="font-bold text-sm bg-transparent outline-none w-28 border-b border-ink/20"
+              />
+            ) : (
+              <h2
+                className={cn("font-bold text-sm", !isViewer && "cursor-pointer hover:opacity-70 transition")}
+                onClick={() => {
+                  if (isViewer) return;
+                  setEditTitle(displayTitle);
+                  setIsEditingTitle(true);
+                }}
+                title={!isViewer ? "Clique para editar o nome da etapa" : undefined}
+              >
+                {displayTitle}
+              </h2>
+            )}
+
             <span className="text-[10px] bg-surface-2 px-2 py-0.5 rounded-full font-semibold">
               {tasks.length}
             </span>

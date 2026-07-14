@@ -141,7 +141,7 @@ function TopbarSimple({ title, subtitle, right }: TopbarProps) {
 }
 
 interface TopbarProps {
-  title: string;
+  title: string | React.ReactNode;
   subtitle?: string;
   right?: React.ReactNode;
   variant?: "full" | "simple";
