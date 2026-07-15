@@ -89,6 +89,7 @@ interface Actions {
   addCreditCard: (card: Omit<CreditCard, "id">) => void;
   updateCreditCard: (id: string, patch: Partial<CreditCard>) => void;
   removeCreditCard: (id: string) => void;
+  payCreditCardInvoice: (cardName: string, yearMonth: string) => void;
   pendingCount: () => number;
   
   setHydrated: (h: boolean) => void;
@@ -205,6 +206,16 @@ export const useFinanceStore = create<State & Actions>()(
 
       removeCreditCard: (id) =>
         set((s) => ({ creditCards: s.creditCards.filter(c => c.id !== id) })),
+
+      payCreditCardInvoice: (cardName, yearMonth) =>
+        set((s) => ({
+          expenses: s.expenses.map((e) => {
+            if (e.isCartao && e.cartaoNome === cardName && isExpenseActiveInMonth(e, yearMonth)) {
+              return { ...e, payments: { ...e.payments, [yearMonth]: true } };
+            }
+            return e;
+          }),
+        })),
 
       setHydrated: (h) => set({ hydrated: h }),
     }),

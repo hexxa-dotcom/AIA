@@ -497,6 +497,7 @@ export default function FinancasPage() {
   const allExpenses = useFinanceStore((s) => s.expenses);
   const creditCards = useFinanceStore((s) => s.creditCards);
   const pendingCount = useFinanceStore((s) => s.pendingCount());
+  const payCreditCardInvoice = useFinanceStore((s) => s.payCreditCardInvoice);
   
   const yearMonth = toYearMonth(year, month);
 
@@ -809,6 +810,12 @@ export default function FinancasPage() {
                           .filter(e => e.isCartao && e.cartaoNome === c.name && isExpenseActiveInMonth(e, nextYearMonth))
                           .reduce((a, e) => a + e.amount, 0);
 
+                        // Fatura Atual
+                        const currentMonthExpenses = allExpenses
+                          .filter(e => e.isCartao && e.cartaoNome === c.name && isExpenseActiveInMonth(e, yearMonth));
+                        const currentMonthFatura = currentMonthExpenses.reduce((a, e) => a + e.amount, 0);
+                        const hasUnpaid = currentMonthExpenses.some(e => !e.payments[yearMonth]);
+
                         // Melhor dia de compra
                         const nowDay = now.getDate();
                         const isBestDay = nowDay === c.closingDay + 1;
@@ -824,6 +831,20 @@ export default function FinancasPage() {
                               </div>
                               <div className="text-right flex items-center gap-4">
                                 <div className="text-right">
+                                  <p className="text-[10px] uppercase font-bold text-muted">Fatura Atual</p>
+                                  <p className="font-bold text-sm text-ink">R$ {currentMonthFatura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                  {hasUnpaid && currentMonthFatura > 0 ? (
+                                    <button 
+                                      onClick={() => payCreditCardInvoice(c.name, yearMonth)}
+                                      className="text-[9px] font-bold bg-ink text-surface px-2 py-0.5 rounded-full hover:opacity-80 transition-opacity mt-1"
+                                    >
+                                      Pagar Fatura
+                                    </button>
+                                  ) : (
+                                    currentMonthFatura > 0 && <span className="text-[9px] font-bold text-success mt-1 block">Pago</span>
+                                  )}
+                                </div>
+                                <div className="text-right border-l border-flat pl-4">
                                   <p className="text-[10px] uppercase font-bold text-muted">Próx. Fatura</p>
                                   <p className="font-bold text-sm text-ink">R$ {nextMonthFatura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                 </div>
