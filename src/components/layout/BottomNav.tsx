@@ -22,7 +22,7 @@ export function BottomNav() {
       {/* Overlay "Mais" */}
       {open && (
         <div
-          className="fixed inset-0 z-40 md:hidden"
+          className="fixed inset-0 z-40 lg:hidden"
           style={{ background: "rgba(0,0,0,0.35)" }}
           onClick={() => setOpen(false)}
         >
@@ -62,7 +62,7 @@ export function BottomNav() {
 
       {/* Bottom bar */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-30 md:hidden flex items-center px-2 flat-surface"
+        className="fixed bottom-0 left-0 right-0 z-30 lg:hidden flex items-center px-2 flat-surface"
         style={{
           height: 64,
           paddingBottom: "env(safe-area-inset-bottom)",
