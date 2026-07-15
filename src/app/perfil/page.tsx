@@ -28,6 +28,7 @@ import { Topbar } from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { ACHIEVEMENTS as GLOBAL_ACHIEVEMENTS } from "@/lib/xp";
+import { setUsername } from "@/app/actions/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Task, Board } from "@/lib/types";
 
@@ -1430,6 +1431,26 @@ export default function PerfilPage() {
   const userName = useMemo(() => email.split("@")[0] || "Usuário", [email]);
   const finalName = profile.name || userName;
 
+  const [appwriteUsername, setAppwriteUsername] = useState<string | null>(null);
+  const [editAppwriteUsername, setEditAppwriteUsername] = useState("");
+  const [savingUsername, setSavingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const { databases } = getAppwrite();
+    if (!databases) return;
+    const dbId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "aia";
+    databases.getDocument(dbId, "usernames", user.id)
+      .then((doc) => {
+        setAppwriteUsername(doc.username);
+        setEditAppwriteUsername(doc.username);
+      })
+      .catch(() => {
+        // Ignora erro se não existir ainda
+      });
+  }, [user]);
+
   const completedCount = useMemo(
     () => tasks.filter((t) => t.completedAt).length,
     [tasks]
@@ -1472,7 +1493,19 @@ export default function PerfilPage() {
     router.push("/login");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setUsernameError(null);
+    if (user && editAppwriteUsername && editAppwriteUsername !== appwriteUsername) {
+      setSavingUsername(true);
+      const res = await setUsername(user.id, user.email, editAppwriteUsername);
+      setSavingUsername(false);
+      if (!res.ok) {
+        setUsernameError(res.error || "Erro ao salvar username");
+        return; // Retorna sem fechar o modo de edição
+      }
+      setAppwriteUsername(res.error ? appwriteUsername : editAppwriteUsername);
+    }
+
     setProfileData({
       name: editName.trim(),
       role: editRole.trim(),
@@ -1606,6 +1639,20 @@ export default function PerfilPage() {
                   />
                 </div>
 
+                <div>
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-muted mb-1 block">Username (@)</label>
+                  <input 
+                    type="text" 
+                    value={editAppwriteUsername}
+                    onChange={(e) => setEditAppwriteUsername(e.target.value)}
+                    className="w-full px-3 py-2 bg-surface-2 rounded-xl text-xs outline-none focus:ring-2 focus:ring-ink/10 text-ink"
+                    placeholder="Ex: seu_usuario"
+                  />
+                  {usernameError && (
+                    <p className="text-[10px] text-danger mt-1 font-bold">{usernameError}</p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[10px] uppercase font-bold tracking-wider text-muted mb-1 block">Cargo</label>
@@ -1669,10 +1716,10 @@ export default function PerfilPage() {
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <Button variant="primary" size="sm" onClick={handleSave} className="flex-1">
-                    Salvar
+                  <Button variant="primary" size="sm" onClick={handleSave} className="flex-1" disabled={savingUsername}>
+                    {savingUsername ? "Salvando..." : "Salvar"}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} disabled={savingUsername}>
                     Cancelar
                   </Button>
                 </div>
@@ -1686,7 +1733,14 @@ export default function PerfilPage() {
                     {profile.role} {profile.company && `na ${profile.company}`}
                   </p>
                 )}
-                <p className="text-[9px] font-mono text-muted/50">{email}</p>
+                <div className="flex gap-2 items-center">
+                  {appwriteUsername && (
+                    <span className="px-2 py-0.5 bg-lime/20 text-ink border border-lime/40 rounded-md text-[10px] font-bold">
+                      @{appwriteUsername}
+                    </span>
+                  )}
+                  <p className="text-[9px] font-mono text-muted/50">{email}</p>
+                </div>
 
                 {profile.bio && (
                   <p className="text-xs text-ink/75 max-w-md mt-2 italic leading-relaxed px-4">

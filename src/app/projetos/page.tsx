@@ -61,7 +61,8 @@ export default function ProjetosPage() {
   function handleCreateProject() {
     const name = prompt("Nome do novo projeto complexo:");
     if (name) {
-      const newId = createBoard(name, "📁");
+      const clientName = prompt("Nome do cliente (opcional):");
+      const newId = createBoard(name, "📁", clientName || undefined);
       switchBoard(newId);
       setViewMode("overview");
       setPageMode("projects");
@@ -244,6 +245,13 @@ export default function ProjetosPage() {
                         </div>
                         <div>
                           <h3 className="font-bold text-ink truncate text-lg">{b.name}</h3>
+                          {b.clientName && (
+                            <div className="mt-1 mb-1">
+                              <span className="text-[9px] bg-lime/20 text-lime px-2 py-0.5 rounded-full font-bold">
+                                {b.clientName}
+                              </span>
+                            </div>
+                          )}
                           <p className="text-[10px] text-muted flex items-center gap-1 mt-0.5">
                             {b.sharedBy ? `Compartilhado por ${b.sharedBy}` : (b.collaborators?.length ? "Projeto de equipe" : "Projeto pessoal")}
                           </p>

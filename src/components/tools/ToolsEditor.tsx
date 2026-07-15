@@ -20,14 +20,14 @@ export function ToolsEditor({ id, onClose }: Props) {
 
   const [name, setName] = useState(tool?.name ?? "");
   const [url, setUrl] = useState(tool?.url ?? "");
-  const [icon, setIcon] = useState(tool?.icon ?? "");
+  const [description, setDescription] = useState(tool?.description ?? "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (tool) {
       setName(tool.name);
       setUrl(tool.url);
-      setIcon(tool.icon ?? "");
+      setDescription(tool.description ?? "");
     }
   }, [tool]);
 
@@ -38,9 +38,9 @@ export function ToolsEditor({ id, onClose }: Props) {
     setSaving(true);
     try {
       if (id) {
-        update(id, name.trim(), url.trim(), icon.trim() || undefined);
+        update(id, name.trim(), url.trim(), description.trim() || undefined);
       } else {
-        add(name.trim(), url.trim(), icon.trim() || undefined);
+        add(name.trim(), url.trim(), description.trim() || undefined);
       }
       onClose();
     } finally {
@@ -102,14 +102,13 @@ export function ToolsEditor({ id, onClose }: Props) {
 
           <div>
             <label className="text-xs font-semibold text-ink mb-1 block">
-              Ícone (emoji)
+              Descrição (Opcional)
             </label>
             <Input
               type="text"
-              placeholder=""
-              value={icon}
-              onChange={(e) => setIcon(e.target.value.slice(0, 2))}
-              maxLength={2}
+              placeholder="Sobre o que é este link?"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 

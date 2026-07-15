@@ -288,7 +288,10 @@ export function ExpenseRow({
       {/* name + meta */}
       <div className="flex-1 min-w-0">
         <p
-          className="text-sm font-semibold leading-snug truncate"
+          className={cn(
+            "text-sm font-semibold leading-snug truncate",
+            isPaid && "line-through opacity-70"
+          )}
           style={{ color: isPaid ? "var(--color-muted)" : "var(--color-ink)" }}
         >
           {expense.name}
@@ -407,6 +410,7 @@ export function ExpenseRow({
         <p
           className={cn(
             "text-base font-bold tabular-nums leading-none mt-0.5",
+            isPaid && "line-through opacity-70",
             expense.isIncome && !isPaid ? "text-success" :
             expense.isInvestimento && !isPaid ? "text-purple-500" :
             isPaid ? "text-muted" : "text-ink"

@@ -92,6 +92,7 @@ export interface Board {
   okrs?: string;
   kpis?: string;
   budget?: number;
+  clientName?: string;
   columns?: Partial<Record<ColumnKey, string>>;
   createdAt: number;
   collaborators?: BoardCollaborator[];

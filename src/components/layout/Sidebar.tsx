@@ -205,10 +205,10 @@ export function Sidebar() {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
       className={cn(
-        "hidden md:flex shrink-0 flex-col relative z-40",
+        "hidden xl:flex shrink-0 flex-col relative z-40",
         "flat-surface rounded-2xl py-4 gap-1",
         expanded ? "w-[200px] px-3 items-stretch" : "w-[68px] px-0 items-center",
-        "md:sticky md:top-4 md:h-[calc(100vh-32px)]",
+        "xl:sticky xl:top-4 xl:h-[calc(100vh-32px)]",
         "transition-all duration-300 ease-[cubic-bezier(0.2,1,0.2,1)]",
       )}
     >

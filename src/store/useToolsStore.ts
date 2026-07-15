@@ -7,7 +7,7 @@ export interface Tool {
   id: string;
   name: string;
   url: string;
-  icon?: string;
+  description?: string;
   createdAt: number;
 }
 
@@ -17,9 +17,9 @@ interface State {
 }
 
 interface Actions {
-  add: (name: string, url: string, icon?: string) => void;
+  add: (name: string, url: string, description?: string) => void;
   remove: (id: string) => void;
-  update: (id: string, name: string, url: string, icon?: string) => void;
+  update: (id: string, name: string, url: string, description?: string) => void;
   setHydrated: (h: boolean) => void;
 }
 
@@ -29,7 +29,7 @@ export const useToolsStore = create<State & Actions>()(
       tools: [],
       hydrated: false,
 
-      add: (name, url, icon) =>
+      add: (name, url, description) =>
         set((s) => ({
           tools: [
             ...s.tools,
@@ -37,7 +37,7 @@ export const useToolsStore = create<State & Actions>()(
               id: nanoid(),
               name,
               url,
-              icon,
+              description,
               createdAt: Date.now(),
             },
           ],
@@ -48,10 +48,10 @@ export const useToolsStore = create<State & Actions>()(
           tools: s.tools.filter((t) => t.id !== id),
         })),
 
-      update: (id, name, url, icon) =>
+      update: (id, name, url, description) =>
         set((s) => ({
           tools: s.tools.map((t) =>
-            t.id === id ? { ...t, name, url, icon } : t,
+            t.id === id ? { ...t, name, url, description } : t,
           ),
         })),
 

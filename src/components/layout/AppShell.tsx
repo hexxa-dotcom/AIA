@@ -111,12 +111,12 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex gap-2 sm:gap-3 p-2 sm:p-4 min-h-screen flex-col lg:flex-row">
+    <div className="flex gap-2 sm:gap-3 p-2 sm:p-4 min-h-screen flex-col xl:flex-row">
       {/* Sidebar — oculta no mobile e tablet */}
-      <div className="hidden lg:block">
+      <div className="hidden xl:block">
         <Sidebar />
       </div>
-      <main className="flex-1 min-w-0 flex flex-col gap-3 pb-20 lg:pb-3 pt-2 sm:pt-4 pr-2 sm:pr-4" style={{ overflowX: "clip" }}>
+      <main className="flex-1 min-w-0 flex flex-col gap-3 pb-20 xl:pb-3 pt-2 sm:pt-4 pr-2 sm:pr-4" style={{ overflowX: "clip" }}>
         <GlobalTopbar />
         
         <AnimatePresence mode="wait">

@@ -7,6 +7,7 @@ import { isSupabaseEnabled } from "@/lib/supabase";
 import { isAppwriteEnabled } from "@/lib/appwrite";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { resolveUsernameToEmail } from "@/app/actions/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,10 +39,19 @@ export default function LoginPage() {
     setError(null);
     setSuccessMsg(null);
 
-    const emailClean = email.trim();
+    let emailClean = email.trim();
     if (!emailClean) {
-      setError("Por favor, digite um e-mail válido.");
+      setError("Por favor, digite um e-mail ou username válido.");
       return;
+    }
+
+    if (emailClean.startsWith("@")) {
+      const resolved = await resolveUsernameToEmail(emailClean);
+      if (!resolved.ok || !resolved.email) {
+        setError(resolved.error ?? "Username não encontrado.");
+        return;
+      }
+      emailClean = resolved.email;
     }
 
     const res = await sendOtpToken(emailClean);
@@ -117,13 +127,13 @@ export default function LoginPage() {
           <form onSubmit={handleSendEmail} className="space-y-4 animate-fadeIn">
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wider font-extrabold text-muted block mb-1">
-                Seu E-mail
+                Seu E-mail ou @Username
               </label>
               <Input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nome@exemplo.com"
+                placeholder="nome@exemplo.com ou @seu_usuario"
                 required
                 autoFocus
                 className="w-full text-sm py-2 px-3 bg-surface-2 border border-flat rounded-xl outline-none focus:ring-2 focus:ring-ink/10"

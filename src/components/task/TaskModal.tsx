@@ -97,7 +97,7 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
   const dueDateValue = dueDate ? new Date(dueDate).toISOString().slice(0, 16) : "";
 
   return (
-    <Dialog open={!!taskId} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!taskId} onOpenChange={(open) => !open && handleSave()}>
       <DialogContent size="lg" className="w-[95vw] sm:w-[600px] h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col p-0 overflow-hidden bg-surface">
         
         {/* Header Content */}
@@ -190,6 +190,31 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
             </PropertyRow>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <PropertyRow icon={<User size={13} />} label="Contexto (Opcional)">
+              <div className="flex flex-col gap-1.5">
+                <select
+                  value={clientType || ""}
+                  onChange={(e) => setClientType(e.target.value as any || undefined)}
+                  className="text-[11px] bg-surface-2/50 hover:bg-surface-2 rounded-lg px-2 py-1.5 outline-none w-full border border-ink/5 font-semibold transition"
+                >
+                  <option value="">Geral</option>
+                  <option value="pessoal">Pessoal</option>
+                  <option value="cliente">Profissional / Cliente</option>
+                </select>
+                {clientType === "cliente" && (
+                  <input
+                    type="text"
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="Nome do cliente (opcional)"
+                    className="text-[11px] bg-transparent border-b border-ink/10 pb-0.5 outline-none w-full placeholder:text-muted/50 mt-1"
+                  />
+                )}
+              </div>
+            </PropertyRow>
+          </div>
+
           <ReminderConfig taskId={task.id} dueDate={dueDate} />
 
         </div>
@@ -231,9 +256,6 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="light" onClick={onClose} className="px-4 py-2 text-xs">
-              Cancelar
-            </Button>
             <Button variant="primary" onClick={handleSave} className="px-6 py-2 text-xs font-bold shadow-sm">
               Salvar
             </Button>

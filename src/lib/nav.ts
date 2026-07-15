@@ -10,7 +10,7 @@ export type NavItem = { href: string; label: string; Icon: React.ElementType };
 export const NAV_BY_PERFIL: Record<Perfil, NavItem[]> = {
   profissional: [
     { href: "/foco",        label: "Em execução",  Icon: Target },
-    { href: "/projetos",    label: "Projetos",     Icon: LayoutGrid },
+    { href: "/projetos",    label: "Tarefas",      Icon: LayoutGrid },
     { href: "/calendario",  label: "Agenda",       Icon: CalendarDays },
     { href: "/ferramentas", label: "Docs",         Icon: FolderClosed },
     { href: "/quadro",      label: "Quadro",       Icon: PenLine },

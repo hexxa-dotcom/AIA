@@ -41,9 +41,6 @@ export function ToolsList({ onEdit }: Props) {
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                {tool.icon && (
-                  <span className="text-lg shrink-0">{tool.icon}</span>
-                )}
                 <h3 className="font-bold text-sm text-ink truncate group-hover:text-lime transition">
                   {tool.name}
                 </h3>
@@ -51,7 +48,11 @@ export function ToolsList({ onEdit }: Props) {
               <ExternalLink size={12} className="text-muted group-hover:text-lime opacity-0 group-hover:opacity-100 transition shrink-0 ml-2" />
             </div>
 
-            <p className="text-xs text-muted truncate mb-3">{tool.url}</p>
+            {tool.description && (
+              <p className="text-xs text-ink/70 line-clamp-2 mb-2">{tool.description}</p>
+            )}
+
+            <p className="text-[10px] text-muted truncate mb-3">{tool.url}</p>
 
             <div className="flex gap-2">
               <button

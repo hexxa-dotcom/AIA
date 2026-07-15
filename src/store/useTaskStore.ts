@@ -22,7 +22,7 @@ interface Actions {
   initIfEmpty: () => void;
 
   // boards
-  createBoard: (name: string, emoji?: string) => string;
+  createBoard: (name: string, emoji?: string, clientName?: string) => string;
   updateBoard: (id: string, data: Partial<Board>) => void;
   switchBoard: (id: string) => void;
   renameBoard: (id: string, name: string) => void;
@@ -99,10 +99,10 @@ export const useTaskStore = create<State & Actions>()(
         set({ boards: [board], activeBoardId: board.id, tasks });
       },
 
-      createBoard: (name, emoji) => {
+      createBoard: (name, emoji, clientName) => {
         const id = nanoid();
         const scope = usePerfilStore.getState().perfil;
-        const newBoard: Board = { id, name, emoji, scope, createdAt: Date.now() };
+        const newBoard: Board = { id, name, emoji, clientName, scope, createdAt: Date.now() };
         set((s) => ({ boards: [...s.boards, newBoard], activeBoardId: id }));
         return id;
       },

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useTaskStore } from "@/store/useTaskStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { formatDuration } from "@/lib/utils";
+import { formatDuration, cn } from "@/lib/utils";
 import { Target, Focus, ListTodo, Users, ShieldAlert, Share2, Crown, Trash2, LayoutGrid, AlertTriangle, Clock, DollarSign } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 
@@ -47,6 +47,30 @@ export function ProjectOverview({ onShare }: Props) {
   }
 
   const projectTasks = useTaskStore.getState().tasks.filter((t) => t.boardId === board?.id);
+  
+  // Progress calculations
+  const totalTasks = projectTasks.length;
+  const doneTasks = projectTasks.filter(t => t.column === 'done').length;
+  const progressPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const pendingTasks = totalTasks - doneTasks;
+  
+  // Deadline calculations
+  const lastDueDateTask = projectTasks.filter(t => t.dueDate).sort((a, b) => (b.dueDate || 0) - (a.dueDate || 0))[0];
+  let daysLeftText = "Sem prazo definido";
+  let isLate = false;
+  if (lastDueDateTask && lastDueDateTask.dueDate) {
+    const msLeft = lastDueDateTask.dueDate - Date.now();
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) {
+      isLate = true;
+      daysLeftText = `${Math.abs(daysLeft)} dias atrasado`;
+    } else if (daysLeft === 0) {
+      daysLeftText = "Prazo encerra hoje";
+    } else {
+      daysLeftText = `${daysLeft} dias restantes`;
+    }
+  }
+
   const totalTimeSpent = projectTasks.reduce((acc, t) => acc + (t.totalTimeSec || 0), 0);
   const totalCost = projectTasks.reduce((acc, t) => {
     const hours = (t.totalTimeSec || 0) / 3600;
@@ -165,6 +189,46 @@ export function ProjectOverview({ onShare }: Props) {
 
       {/* Coluna Lateral: Métricas, Equipe e Danger Zone */}
       <div className="flex flex-col gap-4">
+
+        {/* Visão Geral (Progresso) */}
+        <div className="glass rounded-3xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-ink/10 text-ink grid place-items-center">
+              <Target size={16} />
+            </div>
+            <h3 className="font-bold text-ink text-lg">Progresso</h3>
+          </div>
+          
+          <div className="mb-4">
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-3xl font-black text-ink leading-none">{progressPct}%</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Concluído</span>
+            </div>
+            <div className="h-2 rounded-full w-full bg-ink/5 overflow-hidden">
+              <div 
+                className="h-full bg-lime transition-all duration-500 ease-out" 
+                style={{ width: `${progressPct}%` }} 
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-surface-2 p-3 rounded-2xl flex flex-col justify-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 block">Tarefas Restantes</span>
+              <span className="font-bold text-ink text-sm">
+                {pendingTasks === 0 ? "Tudo pronto!" : `${pendingTasks} pendente${pendingTasks === 1 ? '' : 's'}`}
+              </span>
+            </div>
+            <div className={cn("bg-surface-2 p-3 rounded-2xl flex flex-col justify-center", isLate && "bg-danger/10")}>
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider mb-1 block", isLate ? "text-danger" : "text-muted")}>
+                Prazo Final
+              </span>
+              <span className={cn("font-bold text-sm", isLate ? "text-danger" : "text-ink")}>
+                {daysLeftText}
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Métricas do Projeto */}
         <div className="glass rounded-3xl p-5">
