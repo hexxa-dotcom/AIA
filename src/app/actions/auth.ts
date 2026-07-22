@@ -21,8 +21,8 @@ export async function resolveUsernameToEmail(username: string): Promise<{ ok: bo
       return { ok: false, error: "Erro de configuração no servidor." };
     }
 
-    const query = encodeURIComponent(`equal("username", ["${cleanUsername}"])`);
-    const url = `${endpoint}/databases/${databaseId}/collections/usernames/documents?queries[0]=${query}`;
+    const query = encodeURIComponent(JSON.stringify({ method: "equal", attribute: "username", values: [cleanUsername] }));
+    const url = `${endpoint}/databases/${databaseId}/collections/usernames/documents?queries[]=${query}`;
 
     const res = await fetch(url, {
       method: "GET",
@@ -82,8 +82,8 @@ export async function setUsername(userId: string, email: string, username: strin
     };
 
     // 1. Verificar se já existe outro usuário com esse username
-    const query = encodeURIComponent(`equal("username", ["${cleanUsername}"])`);
-    const searchRes = await fetch(`${endpoint}/databases/${databaseId}/collections/usernames/documents?queries[0]=${query}`, {
+    const query = encodeURIComponent(JSON.stringify({ method: "equal", attribute: "username", values: [cleanUsername] }));
+    const searchRes = await fetch(`${endpoint}/databases/${databaseId}/collections/usernames/documents?queries[]=${query}`, {
       method: "GET",
       headers,
       cache: "no-store",
