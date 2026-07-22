@@ -9,6 +9,8 @@ import { useTaskStore } from "@/store/useTaskStore";
 import { useRoutineStore } from "@/store/useRoutineStore";
 import { useGameStore } from "@/store/useGameStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useToolsStore } from "@/store/useToolsStore";
+import { useSpaceStore } from "@/store/useSpaceStore";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import { isAppwriteEnabled } from "@/lib/appwrite";
 import { useSupabaseSync } from "@/lib/sync";
@@ -57,6 +59,18 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   useCommandShortcut();
 
   const isRemoteSyncEnabled = () => isSupabaseEnabled() || isAppwriteEnabled();
+
+  // Migração única de Tools (Docs) para Space Links
+  useEffect(() => {
+    const tools = useToolsStore.getState().tools;
+    if (tools.length > 0) {
+      const { addLink } = useSpaceStore.getState();
+      tools.forEach((t) => {
+        addLink(t.name, t.url, "Migrados de Docs", "profissional", t.description);
+      });
+      useToolsStore.setState({ tools: [] });
+    }
+  }, []);
 
   // Inicializa auth quando disponível
   useEffect(() => {

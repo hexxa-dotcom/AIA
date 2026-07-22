@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Flame, Star, ThermometerSun } from "lucide-react";
+import { Flame, Star, Sun, Cloud, CloudRain, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useGameStore } from "@/store/useGameStore";
 import { levelProgress } from "@/lib/xp";
 import { ActiveTimerWidget } from "@/components/task/ActiveTimerWidget";
@@ -15,6 +16,7 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
   const zenMode = useThemeStore((s) => s.zenMode);
 
   const [weatherTemp, setWeatherTemp] = useState<number | null>(null);
+  const [weatherCode, setWeatherCode] = useState<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -36,11 +38,19 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
         
         const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
         const weatherData = await weatherRes.json();
-        if (mounted && weatherData?.current_weather?.temperature != null) {
-          setWeatherTemp(Math.round(weatherData.current_weather.temperature));
+        if (mounted && weatherData?.current_weather) {
+          if (weatherData.current_weather.temperature != null) {
+            setWeatherTemp(Math.round(weatherData.current_weather.temperature));
+          }
+          if (weatherData.current_weather.weathercode != null) {
+            setWeatherCode(weatherData.current_weather.weathercode);
+          }
         }
       } catch (e) {
-        if (mounted) setWeatherTemp(22);
+        if (mounted) {
+          setWeatherTemp(22);
+          setWeatherCode(0);
+        }
       }
     }
     fetchWeather();
@@ -54,6 +64,13 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
       month: "short"
     }).replace(".", "");
   }, []);
+
+  const WeatherIcon = useMemo(() => {
+    if (weatherCode === null) return Sun;
+    if (weatherCode === 0 || weatherCode === 1) return Sun; // Clear, Mainly clear
+    if (weatherCode === 2 || weatherCode === 3 || weatherCode === 45 || weatherCode === 48) return Cloud; // Partly cloudy, overcast, fog
+    return CloudRain; // Rain, Drizzle, Snow, Thunderstorm
+  }, [weatherCode]);
 
   return (
     <header className="relative mb-4 sm:mb-6 glass border rounded-3xl px-6 py-4 flex flex-col xl:flex-row xl:items-center justify-between gap-6" style={{ borderColor: "var(--flat-border)", boxShadow: "0 4px 24px -12px rgba(0,0,0,0.1)" }}>
@@ -71,8 +88,8 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
           <div className="flex items-center gap-2 text-xs text-muted font-medium capitalize select-none">
             <span>{formattedDate}</span>
             <span>•</span>
-            <span className="flex items-center gap-0.5 normal-case">
-              <ThermometerSun size={13} className="text-warning animate-pulse shrink-0" />
+            <span className="flex items-center gap-1.5 normal-case text-ink/80 font-bold">
+              <WeatherIcon size={14} className="text-warning shrink-0" />
               {weatherTemp !== null ? `${weatherTemp}°C` : "..."}
             </span>
           </div>
@@ -80,9 +97,9 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
       </div>
 
       {/* Centro - Gamificação Solta */}
-      <div className="flex-1 flex justify-center">
+      <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 hidden lg:flex justify-center pointer-events-none">
         {!zenMode && (
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="flex items-center gap-6 pointer-events-auto">
             <div className="w-8 h-8 rounded-full bg-ink text-lime grid place-items-center text-sm font-bold shrink-0 shadow-sm">
               {level}
             </div>
@@ -115,6 +132,7 @@ function TopbarFull({ title, subtitle, right }: TopbarProps) {
 
       {/* Lado Direito - Controles e Espaço */}
       <div className="flex flex-wrap md:flex-nowrap items-center justify-end gap-3 shrink-0">
+
         <ActiveTimerWidget />
         {right}
       </div>
@@ -133,6 +151,7 @@ function TopbarSimple({ title, subtitle, right }: TopbarProps) {
 
       {/* Lado Direito */}
       <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+
         <ActiveTimerWidget />
         {right}
       </div>

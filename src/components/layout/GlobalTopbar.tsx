@@ -47,8 +47,8 @@ export function GlobalTopbar() {
   const focusMode = useCollapseStore((s) => s.focusMode);
   const setFocusMode = useCollapseStore((s) => s.setFocusMode);
 
-  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Contrast;
-  const themeLabel = theme === "light" ? "Claro" : theme === "dark" ? "Escuro" : "Foco";
+  const ThemeIcon = theme === "light" ? Sun : Moon;
+  const themeLabel = theme === "light" ? "Claro" : "Escuro";
 
   return (
     <div className="sticky top-0 z-30 flex items-center justify-between gap-4 py-2 px-1 bg-surface-1/80 backdrop-blur-md">

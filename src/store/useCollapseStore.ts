@@ -28,8 +28,6 @@ export const useCollapseStore = create<State & Actions>()(
       toggle: (key) =>
         set((s) => ({
           map: { ...s.map, [key]: !s.map[key] },
-          // mexer num widget manualmente sai do modo foco
-          focusMode: false,
         })),
 
       // modo foco: colapsa todos os widgets de uma vez (nada é removido)

@@ -80,7 +80,7 @@ export interface Task {
   collaborators?: TaskCollaborator[];
   sharedFrom?: { email: string; name?: string };
   recurrence?: Recurrence;
-  clientType?: "pessoal" | "cliente";
+  clientType?: "pessoal" | "profissional";
   clientName?: string;
 }
 

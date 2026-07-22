@@ -5,8 +5,8 @@
   --color-sage: #f0f0ee;
   --color-sage-dark: #dcdcda;
   --color-sage-light: #f7f7f5;
-  --color-lime: #141414;        /* accent = preto no claro, branco no escuro */
-  --color-lime-soft: #3d3d3d;
+  --color-lime: #007AFF;        /* Apple System Blue p/ destaques */
+  --color-lime-soft: #0056b3;
   --color-ink: #141414;
   --color-ink-soft: #2a2a2a;
   --color-surface: #ffffff;
@@ -59,6 +59,8 @@
   --prio-high: #c4c4c0;
   --prio-urgent: #f0f0ee;
   --flat-border: #454542;
+  --color-lime: #0A84FF;
+  --color-lime-soft: #0056b3;
 }
 
 /* ── Transição suave ao trocar de tema ── */
@@ -88,7 +90,7 @@ button { font-family: inherit; cursor: pointer; }
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 /* ── Card de tarefa do Kanban — borda + sombra p/ separar bem as tarefas ── */
@@ -301,78 +303,25 @@ a, button {
   background-size: 200% 100%;
 }
 
-/* ── Modo Cinza (Foco) — Fundo branco como o claro, mas sem cores ── */
-[data-theme="foco"] body {
-  background: #ffffff;
-  color: #141414;
+/* ── Modo Foco: tudo sem cores, apenas tons de preto e branco ── */
+html.focus-mode, html.focus-mode body { 
+  filter: grayscale(100%) !important; 
+  -webkit-filter: grayscale(100%) !important;
 }
-
-[data-theme="foco"] {
-  --color-lime: #141414;
-  --color-lime-soft: #3d3d3d;
-  --color-ink: #141414;
-  --color-ink-soft: #2a2a2a;
-  --color-surface: #ffffff;
-  --color-surface-2: #f5f5f3;
-  --color-surface-3: #ececea;
-  --color-sage: #f0f0ee;
-  --color-sage-dark: #dcdcda;
-  --color-sage-light: #f7f7f5;
-  --color-muted: #8a8a86;
-  --flat-border: #c9c9c5;
-
-  /* Semânticas sem cor (preto e cinza escuro) */
-  --color-danger: #141414;
-  --color-warning: #3d3d3d;
-  --color-success: #141414;
-  --color-info: #3d3d3d;
-}
-
-[data-theme="foco"] .glass {
-  background: rgba(255, 255, 255, 0.65) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid var(--flat-border) !important;
+/* sidebar no foco: só os divisores internos, sem moldura completa */
+html.focus-mode aside.flat-surface {
+  border-color: transparent !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
 }
 
-[data-theme="foco"] .flat-surface {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-color: var(--flat-border);
+/* cards e widgets no foco: remove bordas para visual mais limpo */
+html.focus-mode .glass {
+  border-color: transparent !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.03) !important;
 }
-
-[data-theme="foco"] .glass-subtle {
-  background: #f5f5f3;
-  border-color: var(--flat-border);
+html.focus-mode .glass:hover {
+  border-color: rgba(0,0,0,0.05) !important;
 }
-
-[data-theme="foco"] .bg-white:not(input):not(textarea):not(select):not([type]):not([role="option"]) {
-  background: #ffffff !important;
-  border: 1px solid var(--flat-border) !important;
-  box-shadow: none;
-}
-
-[data-theme="foco"] .bg-surface-2 { background: #f5f5f3 !important; }
-
-[data-theme="foco"] input, [data-theme="foco"] textarea {
-  background: #ffffff !important;
-  color: #141414 !important;
-  border-color: var(--flat-border) !important;
-}
-
-[data-theme="foco"] *::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); }
-[data-theme="foco"] *::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.24); }
-
-[data-theme="foco"] .field-input {
-  background: #ffffff;
-  border-color: var(--flat-border);
-  color: #141414;
-}
-[data-theme="foco"] .field-input:focus { border-color: #141414; }
-
-/* ── Modo Foco: tudo sem cores, apenas tons de preto e branco ── */
-[data-theme="foco"] body { filter: grayscale(1); }
-/* sidebar no foco: só os divisores internos, sem moldura completa */
-[data-theme="foco"] aside.flat-surface { border-color: transparent !important; }

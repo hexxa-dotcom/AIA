@@ -17,7 +17,7 @@ export function FeedChallengesWidget() {
   const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="glass rounded-3xl overflow-hidden flex flex-col border" style={{ borderColor: "var(--flat-border)" }}>
+    <div className="glass rounded-3xl overflow-hidden flex flex-col border h-full" style={{ borderColor: "var(--flat-border)" }}>
       {/* Header */}
       <button
         onClick={toggle}

@@ -29,7 +29,7 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
   const [tagInput, setTagInput] = useState("");
   const [tab, setTab] = useState<"details" | "activity">("details");
   const [recurrence, setRecurrence] = useState<Recurrence | undefined>(undefined);
-  const [clientType, setClientType] = useState<"pessoal" | "cliente" | undefined>(undefined);
+  const [clientType, setClientType] = useState<"pessoal" | "profissional" | undefined>(undefined);
   const [clientName, setClientName] = useState("");
 
   const [dueDate, setDueDate] = useState<number | undefined>(task?.dueDate);
@@ -50,20 +50,14 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
   if (!taskId || !task) return null;
 
   function handleSave() {
-    const newTitle = title.trim() || task!.title;
-    const renamed = newTitle !== task!.title;
-    updateTask(task!.id, { 
+    if (!task) return;
+    const newTitle = title.trim() || task.title;
+    const renamed = newTitle !== task.title;
+    updateTask(task.id, { 
       title: newTitle, 
-      description, 
-      recurrence,
-      clientType,
-      clientName: clientType === "cliente" ? clientName : undefined,
-      dueDate,
-      priority
+      description 
     });
-    if (renamed) logActivity(task!.id, "renamed", { title: newTitle });
-    if (priority !== task!.priority) logActivity(task!.id, "priority_changed", { to: priority });
-    if (dueDate !== task!.dueDate) logActivity(task!.id, "due_changed", { to: dueDate });
+    if (renamed) logActivity(task.id, "renamed", { title: newTitle });
     
     onClose(); // Close modal after saving
   }
@@ -80,6 +74,19 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
       fireConfetti("medium");
       if (leveledUp) setTimeout(() => fireLevelUp(), 400);
     }
+    onClose(); // Automatically close the modal when finishing
+  }
+
+  function handleClientTypeChange(val: "pessoal" | "profissional" | undefined) {
+    setClientType(val);
+    if (!task) return;
+    updateTask(task.id, { clientType: val, clientName: val === "profissional" ? clientName : undefined });
+  }
+
+  function handleClientNameChange(val: string) {
+    setClientName(val);
+    if (!task) return;
+    updateTask(task.id, { clientName: val });
   }
 
   function addTag() {
@@ -191,22 +198,22 @@ export function TaskModal({ taskId, onClose }: { taskId: string | null; onClose:
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <PropertyRow icon={<User size={13} />} label="Contexto (Opcional)">
+            <PropertyRow icon={<User size={13} />} label="Tipo de tarefa">
               <div className="flex flex-col gap-1.5">
                 <select
                   value={clientType || ""}
-                  onChange={(e) => setClientType(e.target.value as any || undefined)}
+                  onChange={(e) => handleClientTypeChange(e.target.value as "pessoal" | "profissional" | undefined)}
                   className="text-[11px] bg-surface-2/50 hover:bg-surface-2 rounded-lg px-2 py-1.5 outline-none w-full border border-ink/5 font-semibold transition"
                 >
-                  <option value="">Geral</option>
+                  <option value="" disabled>Selecione</option>
                   <option value="pessoal">Pessoal</option>
-                  <option value="cliente">Profissional / Cliente</option>
+                  <option value="profissional">Profissional</option>
                 </select>
-                {clientType === "cliente" && (
+                {clientType === "profissional" && (
                   <input
                     type="text"
                     value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
+                    onChange={(e) => handleClientNameChange(e.target.value)}
                     placeholder="Nome do cliente (opcional)"
                     className="text-[11px] bg-transparent border-b border-ink/10 pb-0.5 outline-none w-full placeholder:text-muted/50 mt-1"
                   />

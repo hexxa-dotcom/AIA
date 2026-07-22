@@ -297,7 +297,7 @@ function AppearancePanel() {
       
       <div className="space-y-2">
         <p className="text-[10px] uppercase tracking-widest font-bold text-muted mb-2">Tema visual</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button onClick={() => setTheme("light")} className={cn("p-4 rounded-2xl border text-left transition-all hover:scale-[1.01]", theme === "light" ? "border-ink bg-ink text-surface" : "border-ink/10 hover:border-ink/30 bg-surface-2 text-ink")}>
             <div className="flex items-center justify-between mb-2">
               <span className="font-bold text-xs">Claro</span>
@@ -312,14 +312,6 @@ function AppearancePanel() {
               <Moon size={14} className={theme === "dark" ? "text-lime" : "text-muted"} />
             </div>
             <p className={cn("text-[10px] leading-relaxed", theme === "dark" ? "text-surface/85" : "text-muted")}>Fundo escuro, alto contraste.</p>
-          </button>
-
-          <button onClick={() => setTheme("foco")} className={cn("p-4 rounded-2xl border text-left transition-all hover:scale-[1.01]", theme === "foco" ? "border-ink bg-ink text-surface" : "border-ink/10 hover:border-ink/30 bg-surface-2 text-ink")}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-xs">Foco</span>
-              <Contrast size={14} className={theme === "foco" ? "text-lime" : "text-muted"} />
-            </div>
-            <p className={cn("text-[10px] leading-relaxed", theme === "foco" ? "text-surface/85" : "text-muted")}>Apenas preto e branco.</p>
           </button>
         </div>
       </div>

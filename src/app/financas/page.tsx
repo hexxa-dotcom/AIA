@@ -17,6 +17,8 @@ import { ExpenseEditor } from "@/components/finance/ExpenseEditor";
 import { ExpenseInbox } from "@/components/finance/ExpenseInbox";
 import { CardStatementImporter } from "@/components/finance/CardStatementImporter";
 import { ManageCardsModal } from "@/components/finance/ManageCardsModal";
+import { FinanceExtrato } from "@/components/finance/FinanceExtrato";
+import { FinanceFluxo } from "@/components/finance/FinanceFluxo";
 import { useFinanceStore, isExpenseActiveInMonth } from "@/store/useFinanceStore";
 import { useInvestmentStore, type InvestmentAsset } from "@/store/useInvestmentStore";
 import { cn } from "@/lib/utils";
@@ -40,9 +42,11 @@ function toYearMonth(year: number, month: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
 
-type Tab = "personal" | "casa" | "familia" | "entradas" | "cartoes" | "dividas" | "investimentos";
+type Tab = "personal" | "casa" | "familia" | "entradas" | "cartoes" | "dividas" | "investimentos" | "extrato" | "fluxo";
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
+  { id: "extrato", label: "Extrato do Mês", emoji: "" },
+  { id: "fluxo", label: "Meu Fluxo de Caixa", emoji: "" },
   { id: "personal", label: "Pessoal", emoji: "" },
   { id: "casa", label: "Casa", emoji: "" },
   { id: "familia", label: "Compartilhadas", emoji: "" },
@@ -91,6 +95,16 @@ const TAB_META: Record<
     subtitle: "Acompanhe seus aportes, distribuição de ativos e rentabilidade média",
     color: "bg-success/20 text-success border border-success/30",
   },
+  extrato: {
+    title: "Extrato do Mês",
+    subtitle: "Registro de todas as entradas e saídas",
+    color: "bg-ink text-surface",
+  },
+  fluxo: {
+    title: "Meu Fluxo de Caixa",
+    subtitle: "Resumo analítico de receitas e despesas",
+    color: "bg-ink text-lime",
+  },
 };
 
 const TAB_EMOJI: Record<Tab, string> = {
@@ -101,6 +115,8 @@ const TAB_EMOJI: Record<Tab, string> = {
   cartoes: "",
   dividas: "",
   investimentos: "",
+  extrato: "",
+  fluxo: "",
 };
 
 function InvestimentosTabContent({
@@ -708,6 +724,10 @@ export default function FinancasPage() {
           {/* Renderização unificada no padrão de 2 colunas baseado em Investimentos */}
           {tab === "investimentos" ? (
             <InvestimentosTabContent yearMonth={yearMonth} onEdit={openEdit} />
+          ) : tab === "extrato" ? (
+            <FinanceExtrato yearMonth={yearMonth} />
+          ) : tab === "fluxo" ? (
+            <FinanceFluxo yearMonth={yearMonth} />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start text-left">
               

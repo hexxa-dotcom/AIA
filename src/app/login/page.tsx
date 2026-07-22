@@ -45,7 +45,8 @@ export default function LoginPage() {
       return;
     }
 
-    if (emailClean.startsWith("@")) {
+    const isEmailFormat = emailClean.includes("@") && emailClean.includes(".") && !emailClean.startsWith("@");
+    if (!isEmailFormat) {
       const resolved = await resolveUsernameToEmail(emailClean);
       if (!resolved.ok || !resolved.email) {
         setError(resolved.error ?? "Username não encontrado.");
@@ -83,9 +84,9 @@ export default function LoginPage() {
   // Evita Hydration Mismatch entre SSR (Server-Side) e CSR (Client-Side)
   if (!mounted) {
     return (
-      <div className="min-h-screen grid place-items-center p-4 bg-surface-1">
-        <div className="w-12 h-12 rounded-xl bg-ink grid place-items-center animate-pulse">
-          <Bird size={26} className="text-lime" />
+      <div className="min-h-screen grid place-items-center p-4 bg-white">
+        <div className="animate-pulse flex items-end justify-center w-[44px] h-[38px] text-ink">
+          <Bird size={38} strokeWidth={2} />
         </div>
       </div>
     );
@@ -95,7 +96,7 @@ export default function LoginPage() {
 
   if (!isRemoteEnabled) {
     return (
-      <div className="min-h-screen grid place-items-center p-4 bg-surface-1">
+      <div className="min-h-screen grid place-items-center p-4 bg-white">
         <div className="bg-white rounded-3xl p-8 max-w-md text-center border border-flat shadow-sm">
           <AlertCircle size={32} className="mx-auto mb-3 text-warning" />
           <h1 className="text-xl font-bold mb-2 text-ink">Banco de dados não configurado</h1>
@@ -108,17 +109,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-4 bg-surface-1">
-      <div className="bg-white rounded-3xl p-8 max-w-md w-full border border-flat shadow-md animate-fadeIn">
+    <div className="min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 lg:p-12 bg-white gap-12 lg:gap-32">
+      
+      {/* Slogan lado esquerdo (ou topo no mobile) */}
+      <div className="text-center lg:text-left max-w-md animate-fadeIn">
+        <h1 className="text-3xl lg:text-5xl font-extrabold text-ink tracking-tight leading-tight">
+          Pense.<br />
+          Organize.
+        </h1>
+      </div>
+
+      <div className="bg-white rounded-3xl p-8 max-w-md w-full border border-flat shadow-md animate-fadeIn shrink-0">
         
         {/* Header da marca */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-ink grid place-items-center shadow-sm">
-            <Bird size={26} className="text-lime" />
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div className="flex items-end justify-center text-ink shrink-0 h-[44px]">
+            <Bird size={44} strokeWidth={2} />
           </div>
-          <div>
-            <h1 className="font-bold text-lg text-ink">AIA</h1>
-            <p className="text-xs text-muted">Acesso inteligente por código único</p>
+          <div className="flex flex-col items-center leading-none">
+            <span className="font-extrabold text-[28px] tracking-[0.15em] text-ink whitespace-nowrap">
+              AIA
+            </span>
+            <span className="text-[12px] uppercase tracking-[0.25em] font-bold text-lime mt-1.5 ml-1">
+              SPACE
+            </span>
           </div>
         </div>
 

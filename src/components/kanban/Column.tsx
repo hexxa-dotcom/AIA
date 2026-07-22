@@ -107,7 +107,7 @@ export function Column({ column, tasks, onOpen, isViewer }: { column: ColumnKey;
       <div
         ref={setNodeRef}
         className={cn(
-          "flex-1 flex flex-col gap-3 min-h-[200px] p-1 rounded-2xl transition-colors",
+          "flex-1 flex flex-col gap-4 min-h-[200px] p-2 rounded-2xl transition-colors",
           isOver && "bg-lime/20",
         )}
       >

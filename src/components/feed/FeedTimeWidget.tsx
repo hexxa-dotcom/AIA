@@ -89,7 +89,7 @@ export function FeedTimeWidget() {
   if (todaySec === 0 && weekSec === 0) return null;
 
   return (
-    <div className="glass rounded-3xl overflow-hidden">
+    <div className="glass rounded-3xl overflow-hidden h-full">
       <button
         onClick={toggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-black/[0.02]"

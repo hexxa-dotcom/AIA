@@ -42,6 +42,16 @@ const AVATAR_GRADIENTS: Record<string, string> = {
   candy: "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
 };
 
+const PREDEFINED_AVATARS = [
+  "https://api.dicebear.com/9.x/micah/svg?seed=Felix&backgroundColor=ffdfbf",
+  "https://api.dicebear.com/9.x/micah/svg?seed=Aneka&backgroundColor=c0aede",
+  "https://api.dicebear.com/9.x/micah/svg?seed=Jude&backgroundColor=b6e3f4",
+  "https://api.dicebear.com/9.x/fun-emoji/svg?seed=1&backgroundColor=ffd5dc",
+  "https://api.dicebear.com/9.x/fun-emoji/svg?seed=3&backgroundColor=d1d4f9",
+  "https://api.dicebear.com/9.x/bottts/svg?seed=1&backgroundColor=ffdfbf",
+  "https://api.dicebear.com/9.x/bottts/svg?seed=4&backgroundColor=b6e3f4",
+  "https://api.dicebear.com/9.x/notionists/svg?seed=Leo&backgroundColor=c0aede",
+];
 const MOODS = [
   { emoji: "🚀", label: "Focado" },
   { emoji: "☕", label: "Produtivo" },
@@ -1421,6 +1431,7 @@ export default function PerfilPage() {
   const [editBio, setEditBio] = useState(profile.bio || "");
   const [editInterests, setEditInterests] = useState(profile.interests || "");
   const [editAvatarColor, setEditAvatarColor] = useState(profile.avatarColor || "sunset");
+  const [editAvatarUrl, setEditAvatarUrl] = useState(profile.avatarUrl || "");
 
   // Inputs para novas habilidades e objetivos
   const [newSkillName, setNewSkillName] = useState("");
@@ -1490,6 +1501,7 @@ export default function PerfilPage() {
 
   const handleSignOut = () => {
     useAuthStore.getState().signOut();
+    localStorage.clear(); // Limpa todos os stores do Zustand
     router.push("/login");
   };
 
@@ -1513,6 +1525,7 @@ export default function PerfilPage() {
       bio: editBio.trim(),
       interests: editInterests.trim(),
       avatarColor: editAvatarColor,
+      avatarUrl: editAvatarUrl,
     });
     setIsEditing(false);
   };
@@ -1613,10 +1626,14 @@ export default function PerfilPage() {
           <div className="glass rounded-3xl p-6 flex flex-col items-center gap-4 text-center relative overflow-hidden">
             <div className="relative">
               <div
-                className="w-24 h-24 rounded-full grid place-items-center text-3xl font-extrabold text-white shadow-lg transition-all duration-300"
+                className="w-24 h-24 rounded-full grid place-items-center text-3xl font-extrabold text-white shadow-lg transition-all duration-300 overflow-hidden"
                 style={{ background: AVATAR_GRADIENTS[profile.avatarColor || "sunset"] }}
               >
-                {finalName ? finalName[0].toUpperCase() : "?"}
+                {profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  finalName ? finalName[0].toUpperCase() : "?"
+                )}
               </div>
               <div 
                 title={`Humor de hoje: ${MOODS.find(m => m.emoji === profile.mood)?.label || "Produtivo"}`}
@@ -1704,13 +1721,31 @@ export default function PerfilPage() {
                     {Object.keys(AVATAR_GRADIENTS).map((colorKey) => (
                       <button
                         key={colorKey}
-                        onClick={() => setEditAvatarColor(colorKey)}
+                        onClick={() => { setEditAvatarColor(colorKey); setEditAvatarUrl(""); }}
                         className={cn(
                           "w-6 h-6 rounded-full border-2 transition-all scale-100",
-                          editAvatarColor === colorKey ? "border-ink scale-110 shadow-sm" : "border-transparent hover:scale-105"
+                          editAvatarColor === colorKey && !editAvatarUrl ? "border-ink scale-110 shadow-sm" : "border-transparent hover:scale-105"
                         )}
                         style={{ background: AVATAR_GRADIENTS[colorKey] }}
                       />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-muted mb-2 block">Avatar Divertido</label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {PREDEFINED_AVATARS.map((url) => (
+                      <button
+                        key={url}
+                        onClick={() => setEditAvatarUrl(url)}
+                        className={cn(
+                          "w-8 h-8 rounded-full border-2 transition-all overflow-hidden",
+                          editAvatarUrl === url ? "border-ink scale-110 shadow-sm" : "border-transparent hover:scale-105 opacity-80 hover:opacity-100"
+                        )}
+                      >
+                        <img src={url} alt="Avatar option" className="w-full h-full object-cover" />
+                      </button>
                     ))}
                   </div>
                 </div>

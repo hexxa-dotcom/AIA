@@ -2,26 +2,25 @@
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Topbar } from "@/components/layout/Topbar";
-import { ToolsList } from "@/components/tools/ToolsList";
-import { ToolsEditor } from "@/components/tools/ToolsEditor";
+import { TextsTab } from "@/components/tools/TextsTab";
 import { Button } from "@/components/ui/Button";
-import { Plus, Link2, FileText, FolderOpen, StickyNote } from "lucide-react";
+import { Plus, FileText, FolderOpen, StickyNote, FileEdit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotesTabContent } from "@/app/notas/page";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { DriveExplorer } from "@/components/tools/DriveExplorer";
 
-type Tab = "links" | "arquivos" | "documentos" | "notas";
+type Tab = "textos" | "arquivos" | "documentos" | "notas";
 
 const CLIENT_ID = "769838139065-v9qfodfu6aaipb8ghk32oppsicd27jtn.apps.googleusercontent.com";
 
 export default function DocsPage() {
-  const [tab, setTab] = useState<Tab>("links");
+  const [tab, setTab] = useState<Tab>("textos");
   const [editing, setEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const tabs: { id: Tab; label: string; Icon: React.FC<{ size?: number }> }[] = [
-    { id: "links", label: "Links", Icon: Link2 },
+    { id: "textos", label: "Textos", Icon: FileEdit },
     { id: "arquivos", label: "Arquivos", Icon: FolderOpen },
     { id: "documentos", label: "Documentos", Icon: FileText },
     { id: "notas", label: "Notas", Icon: StickyNote },
@@ -42,17 +41,9 @@ export default function DocsPage() {
         ))}
       </div>
 
-      {tab === "links" && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="font-bold text-sm text-ink">Links Salvos</h2>
-            <Button onClick={() => { setEditingId(null); setEditing(true); }} size="sm">
-              <Plus size={14} /> Adicionar
-            </Button>
-          </div>
-          <ToolsList onEdit={(id) => { setEditingId(id); setEditing(true); }} />
-          {editing && <ToolsEditor id={editingId} onClose={() => { setEditing(false); setEditingId(null); }} />}
-        </div>
+
+      {tab === "textos" && (
+        <TextsTab />
       )}
 
       {tab === "arquivos" && (

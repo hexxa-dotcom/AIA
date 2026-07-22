@@ -26,7 +26,7 @@ export function FeedDailyProgress() {
   const accent = pct === 100 ? "var(--color-success)" : pct >= 50 ? "var(--color-ink)" : "var(--color-warning)";
 
   return (
-    <div className="glass rounded-3xl overflow-hidden flex flex-col">
+    <div className="glass rounded-3xl overflow-hidden flex flex-col h-full">
 
       {/* Header — colapso */}
       <button

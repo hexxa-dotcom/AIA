@@ -72,7 +72,10 @@ export function ExpenseList({
 
   const groups = expenses.reduce<Record<string, RecurringExpense[]>>(
     (acc, e) => {
-      const key = e.group || "Geral";
+      let key = e.group || "Geral";
+      if (isIncomeOnly) {
+        key = e.payments[yearMonth] ? "✅ Recebidos" : "⏳ Agendados (A Receber)";
+      }
       if (!acc[key]) acc[key] = [];
       acc[key].push(e);
       return acc;
@@ -143,6 +146,7 @@ export function CartaoList({
   onEdit: (id: string) => void;
 }) {
   const all = useFinanceStore((s) => s.expenses);
+  const creditCards = useFinanceStore((s) => s.creditCards);
   const togglePaid = useFinanceStore((s) => s.togglePaid);
   const remove = useFinanceStore((s) => s.remove);
 
@@ -187,15 +191,28 @@ export function CartaoList({
                 background: "rgba(150,150,150,0.08)",
                 border: "0.5px solid rgba(150,150,150,0.18)",
               }}
-            >
+              >
               <div className="flex items-center gap-2">
-                <CreditCard size={14} style={{ color: "#8c8c88" }} />
-                <span
-                  className="text-sm font-bold"
-                  style={{ color: "#8c8c88" }}
-                >
-                  {cartao}
-                </span>
+                <CreditCard size={14} style={{ color: "#8c8c88", flexShrink: 0 }} />
+                <div className="flex flex-col">
+                  <span
+                    className="text-sm font-bold leading-tight"
+                    style={{ color: "#8c8c88" }}
+                  >
+                    {cartao}
+                  </span>
+                  {(() => {
+                    const cardInfo = creditCards.find((c) => c.name === cartao);
+                    if (cardInfo) {
+                      return (
+                        <span className="text-[10px] text-muted">
+                          Vencimento: dia {cardInfo.dueDay}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold tabular-nums">
@@ -256,7 +273,9 @@ export function ExpenseRow({
   onRemove: () => void;
   showCategory?: boolean;
 }) {
-  const isPaid = expense.payments[yearMonth] ?? false;
+  const isPaid = Boolean(expense.payments[yearMonth]);
+  const payDateStr = expense.payments[yearMonth];
+  const payDate = typeof payDateStr === "string" ? new Date(payDateStr).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : null;
   const parcela = parcelaLabel(expense, yearMonth);
   const isShared = (expense.sharedWith?.length ?? 0) > 0;
   const isReceived = Boolean(expense.sharedBy);
@@ -297,7 +316,10 @@ export function ExpenseRow({
           {expense.name}
         </p>
         <div className="flex items-center flex-wrap gap-1.5 mt-1">
-          <span className="text-[10px] font-medium text-muted">Venc. dia {expense.dueDay}</span>
+          <span className="text-[10px] font-medium text-muted">
+            Venc. dia {expense.dueDay}
+            {isPaid && payDate && ` • Pago dia ${payDate}`}
+          </span>
 
           {expense.tipo === "recorrente" && (
             <span className="inline-flex items-center gap-0.5 text-[9px] text-muted">

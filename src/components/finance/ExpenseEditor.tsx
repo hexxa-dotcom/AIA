@@ -13,6 +13,7 @@ import {
   AlertCircle,
   User,
   Home,
+  Check,
   Users,
 } from "lucide-react";
 import {
@@ -86,6 +87,7 @@ export function ExpenseEditor({
   const expenses = useFinanceStore((s) => s.expenses);
   const add = useFinanceStore((s) => s.add);
   const update = useFinanceStore((s) => s.update);
+  const togglePaid = useFinanceStore((s) => s.togglePaid);
   const sendInvite = useFinanceStore((s) => s.sendInvite);
   const properties = useFinanceStore((s) => s.properties);
   const familyMembers = useFinanceStore((s) => s.familyMembers);
@@ -116,6 +118,7 @@ export function ExpenseEditor({
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [formaPagamento, setFormaPagamento] = useState<"Dinheiro" | "Pix" | "Débito Automático" | "Cartão de Crédito" | "">(existing?.formaPagamento ?? "");
   const [isActive, setIsActive] = useState(existing?.isActive ?? true);
+  const [isEfetivada, setIsEfetivada] = useState(false);
   const [tipo, setTipo] = useState<ExpenseTipo>(existing?.tipo ?? "recorrente");
   const [totalParcelas, setTotalParcelas] = useState(
     existing?.totalParcelas ? String(existing.totalParcelas) : "",
@@ -241,7 +244,10 @@ export function ExpenseEditor({
     if (id) {
       update(id, payload);
     } else {
-      add(payload);
+      const newId = add(payload);
+      if (tipoLancamento === "receita" && isEfetivada) {
+        togglePaid(newId, new Date().toISOString().slice(0, 7));
+      }
       if (tipoLancamento === "despesa" && shareEmails.length > 0 && user?.email) {
         const inviteData = {
           name: payload.name,
@@ -828,6 +834,27 @@ export function ExpenseEditor({
             </p>
           )}
         </div>
+
+        {/* Efetivada Checkbox for Receitas */}
+        {tipoLancamento === "receita" && !id && (
+          <div className="px-5 pb-4">
+            <label className="flex items-center gap-3 p-4 bg-success/10 border border-success/20 rounded-2xl cursor-pointer hover:bg-success/20 transition-colors">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={isEfetivada}
+                  onChange={(e) => setIsEfetivada(e.target.checked)}
+                  className="peer appearance-none w-5 h-5 border-2 border-success/50 rounded bg-transparent checked:bg-success checked:border-success transition-all cursor-pointer"
+                />
+                <Check size={14} className="absolute text-surface opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-success">Já recebi este valor</span>
+                <span className="text-[10px] text-success/80">O valor será marcado como recebido no mês atual.</span>
+              </div>
+            </label>
+          </div>
+        )}
 
         {/* footer */}
         <div className="flex gap-3 px-5 py-4 border-t border-ink/5 shrink-0 bg-surface-2/20">

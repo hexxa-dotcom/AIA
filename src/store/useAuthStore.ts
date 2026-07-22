@@ -240,6 +240,7 @@ export const useAuthStore = create<State & Actions>((set, get) => ({
         } catch (e) {}
       }
       set({ user: null });
+      if (typeof window !== "undefined") localStorage.clear();
       return;
     }
 
@@ -247,6 +248,7 @@ export const useAuthStore = create<State & Actions>((set, get) => ({
     if (!supabase) return;
     await supabase.auth.signOut();
     set({ user: null });
+    if (typeof window !== "undefined") localStorage.clear();
   },
 }));
 

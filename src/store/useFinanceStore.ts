@@ -29,7 +29,7 @@ export interface RecurringExpense {
   parcelaInicio?: string;
   isCartao: boolean;
   cartaoNome?: string;
-  payments: Record<string, boolean>;
+  payments: Record<string, boolean | string>;
   // multi-imovel (casa)
   imovel?: string;
   // family member tag (familia)
@@ -126,8 +126,8 @@ export const useFinanceStore = create<State & Actions>()(
         set((s) => ({
           expenses: s.expenses.map((e) => {
             if (e.id !== id) return e;
-            const current = e.payments[yearMonth] ?? false;
-            return { ...e, payments: { ...e.payments, [yearMonth]: !current } };
+            const current = e.payments[yearMonth];
+            return { ...e, payments: { ...e.payments, [yearMonth]: current ? false : new Date().toISOString() } };
           }),
         })),
 
@@ -211,7 +211,7 @@ export const useFinanceStore = create<State & Actions>()(
         set((s) => ({
           expenses: s.expenses.map((e) => {
             if (e.isCartao && e.cartaoNome === cardName && isExpenseActiveInMonth(e, yearMonth)) {
-              return { ...e, payments: { ...e.payments, [yearMonth]: true } };
+              return { ...e, payments: { ...e.payments, [yearMonth]: new Date().toISOString() } };
             }
             return e;
           }),

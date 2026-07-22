@@ -47,7 +47,7 @@ export function FeedProjectsWidget() {
   const ongoing = projects.filter(p => p.progress < 100);
 
   return (
-    <div className="glass rounded-3xl overflow-hidden">
+    <div className="glass rounded-3xl overflow-hidden h-full">
       {/* Header */}
       <button
         onClick={toggle}
